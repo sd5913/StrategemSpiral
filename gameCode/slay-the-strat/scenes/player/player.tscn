@@ -11,5 +11,5 @@ script = ExtResource("1_gmlin")
 texture = ExtResource("1_dovo2")
 
 [node name="StatsUI" parent="." unique_id=593304068 instance=ExtResource("2_gmlin")]
-offset_top = 5.0
-offset_bottom = 21.0
+offset_top = 10.0
+offset_bottom = 26.0

@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="CharacterStats" format=3 uid="uid://ctu08a861qfyk"]
 
 [ext_resource type="Script" uid="uid://ba3u3appd3x1f" path="res://custom_resources/character_stats.gd" id="1_nliw2"]
-[ext_resource type="Texture2D" uid="uid://dl3a87y1bxtt8" path="res://art/tile_0096.png" id="1_xju84"]
+[ext_resource type="Texture2D" uid="uid://dvxy4af68kitc" path="res://art/testKnight.png" id="1_xju84"]
 [ext_resource type="Resource" uid="uid://dsvx6f0g6ivc0" path="res://characters/warrior/warrior_starting_deck.tres" id="3_wgifn"]
 
 [resource]
