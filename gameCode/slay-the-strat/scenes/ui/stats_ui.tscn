@@ -1,9 +1,9 @@
 [gd_scene format=3 uid="uid://tl52mgh3wh1f"]
 
 [ext_resource type="Script" uid="uid://fyesydm6cqui" path="res://scenes/ui/stats_ui.gd" id="1_3ktwi"]
-[ext_resource type="Texture2D" uid="uid://oe7v35ii8vrs" path="res://art/tile_0102.png" id="1_08kyh"]
 [ext_resource type="Theme" uid="uid://bp6mbsxro77ws" path="res://main_theme.tres" id="2_3ktwi"]
-[ext_resource type="Texture2D" uid="uid://d0edy7thj8ce6" path="res://art/heart.png" id="3_7klq2"]
+[ext_resource type="Texture2D" uid="uid://4mmkiwvd3d1c" path="res://art/shieldCard.png" id="2_7klq2"]
+[ext_resource type="Texture2D" uid="uid://dadups8ymbfro" path="res://art/healthHeart.png" id="4_3ktwi"]
 
 [node name="StatsUI" type="HBoxContainer" unique_id=593304068]
 anchors_preset = 5
@@ -22,7 +22,7 @@ theme_override_constants/separation = 0
 
 [node name="BlockImg" type="TextureRect" parent="Block" unique_id=983467545]
 layout_mode = 2
-texture = ExtResource("1_08kyh")
+texture = ExtResource("2_7klq2")
 stretch_mode = 5
 
 [node name="BlockLabel" type="Label" parent="Block" unique_id=1700337946]
@@ -40,7 +40,7 @@ theme_override_constants/separation = 2
 
 [node name="HealthImg" type="TextureRect" parent="Health" unique_id=505523453]
 layout_mode = 2
-texture = ExtResource("3_7klq2")
+texture = ExtResource("4_3ktwi")
 stretch_mode = 5
 
 [node name="HealthLabel" type="Label" parent="Health" unique_id=1783657993]

@@ -1,6 +1,6 @@
 [gd_resource type="Resource" format=3 uid="uid://xuxasrx65qyp"]
 
-[ext_resource type="Texture2D" uid="uid://ck1t4hdip6xrl" path="res://art/tile_0119.png" id="1_ungqh"]
+[ext_resource type="Texture2D" uid="uid://bcre18p48doei" path="res://art/attackCard.png" id="1_ungqh"]
 [ext_resource type="Script" uid="uid://ct1ld1m3abxop" path="res://characters/warrior/cards/warrior_axe_attack.gd" id="2_ungqh"]
 
 [resource]

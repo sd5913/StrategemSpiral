@@ -1,10 +1,34 @@
 [gd_resource type="Theme" format=3 uid="uid://bp6mbsxro77ws"]
 
+[ext_resource type="StyleBox" uid="uid://btv25wnqy0uoq" path="res://scenes/cardUI/card_hover_stylebox.tres" id="1_0omi4"]
 [ext_resource type="FontFile" uid="uid://dskmdk146n4rq" path="res://art/pixel_rpg.ttf" id="1_470mv"]
 [ext_resource type="StyleBox" uid="uid://dyry7x5g6s2uq" path="res://scenes/cardUI/card_base_stylebox.tres" id="1_a2l2q"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_58jnp"]
+bg_color = Color(0.7176471, 0.35686275, 0, 0.49411765)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.6565966, 0.5377327, 0, 1)
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_6ik2l"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_466ly"]
+bg_color = Color(0.718124, 0.35677654, 0, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.25544548, 1.3401406e-06, 0.0010231273, 1)
 
 [resource]
 default_font = ExtResource("1_470mv")
 default_font_size = 6
+Button/styles/disabled = SubResource("StyleBoxFlat_58jnp")
+Button/styles/focus = SubResource("StyleBoxEmpty_6ik2l")
+Button/styles/hover = ExtResource("1_0omi4")
+Button/styles/normal = ExtResource("1_a2l2q")
+Button/styles/pressed = SubResource("StyleBoxFlat_466ly")
 Panel/styles/panel = ExtResource("1_a2l2q")
 PanelContainer/styles/panel = ExtResource("1_a2l2q")

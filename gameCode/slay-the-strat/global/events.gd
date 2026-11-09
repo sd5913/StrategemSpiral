@@ -10,3 +10,5 @@ signal tooltip_hide_requested
 
 #playerRelated
 signal player_hand_drawn
+signal player_hand_discarded
+signal player_turn_ended

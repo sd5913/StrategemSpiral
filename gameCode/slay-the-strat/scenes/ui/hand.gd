@@ -7,6 +7,13 @@ extends HBoxContainer
 
 var cards_played_this_turn := 0
 
+func discard_card(card: CardUI) -> void:
+	card.queue_free()
+	
+func disable_hand() -> void:
+	for card in get_children():
+		card.disabled = true
+
 func _ready() -> void:
 	Events.card_played.connect(_on_card_played)
 	
