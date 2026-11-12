@@ -12,8 +12,8 @@ Kenny https://kenney.nl/assets/tiny-dungeon (for placeholder pixel art assets an
 
 # Initial concept/plan
 Player Target: any gamer who wants to try turn based but prefers more action-based input over number crunching\
-User input: utilizing WSAD or arrow keys to input combos and cast actions\
-System response: Positive when good combos are executed, and if enemy weakness is exploited, players take self damage if they mess up, loose attack oppurtunities if they run out of time, players loose/win in a dps check against the enemy.\
+User input: utilizing WSAD or arrow keys to input combos and cast special modifiers onto actions\
+System response: Positive when good combos are executed, and if enemy weakness is exploited, players loose bonus or take self damage if they mess up, loose attack oppurtunities if they run out of time, players loose/win in a dps check against the enemy.\
 Innovation: speeds up typical turn-based combat to both mechanical skill and on-the-fly thinking.\
 First interaction to test: input system logic
 
@@ -23,6 +23,7 @@ First interaction to test: input system logic
 
 # Gameplay Footage (in progress)
 https://youtu.be/oCFkxyNbFD0
+[YouTube video will be updated when new features are added]
 
 
 
