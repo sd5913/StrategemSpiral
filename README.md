@@ -20,3 +20,9 @@ First interaction to test: input system logic
 # Visual Concept
 <img width="1024" height="572" alt="concept_fix" src="https://github.com/user-attachments/assets/9b6afb8e-5466-42ad-b9e1-aca8fa7355ae" />
 [AI-generated conceptual image. Subject to massive changes. NOT finalized UI or build.]
+
+# Gameplay Footage (in progress)
+https://youtu.be/oCFkxyNbFD0
+
+
+
