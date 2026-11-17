@@ -4,7 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://crub4iq8afdsu" path="res://scenes/enemy/enemy.tscn" id="2_oiw7q"]
 [ext_resource type="Script" uid="uid://dj82qex2x2hxw" path="res://scenes/ui/hand.gd" id="2_xd4uy"]
 [ext_resource type="PackedScene" uid="uid://c7a2hi7jsnfrw" path="res://scenes/player/player.tscn" id="3_agsc7"]
-[ext_resource type="Texture2D" uid="uid://bobnk2a8ncqw6" path="res://art/placeholder_image.jpg" id="3_mxe8n"]
+[ext_resource type="Texture2D" uid="uid://xpldripx287v" path="res://art/S2.png" id="3_kd6yx"]
 [ext_resource type="PackedScene" uid="uid://r0w4pngman8f" path="res://scenes/card_target_selector/card_target_selector.tscn" id="3_pll4o"]
 [ext_resource type="Script" uid="uid://d0xjbr3telci7" path="res://scenes/enemy/enemy_handler.gd" id="4_kd6yx"]
 [ext_resource type="Resource" uid="uid://ctu08a861qfyk" path="res://characters/warrior/warrior.tres" id="4_oiw7q"]
@@ -24,8 +24,8 @@ char_stats = ExtResource("4_oiw7q")
 metadata/_edit_lock_ = true
 
 [node name="Background" type="Sprite2D" parent="." unique_id=712301287]
-modulate = Color(0.28118682, 0.28118688, 0.2811868, 1)
-texture = ExtResource("3_mxe8n")
+modulate = Color(0.48570347, 0.48570353, 0.4857034, 1)
+texture = ExtResource("3_kd6yx")
 centered = false
 metadata/_edit_lock_ = true
 
