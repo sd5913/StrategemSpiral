@@ -16,8 +16,8 @@ const DRAGGING_STYLEBOX := preload("uid://ca54yd7w2gcv0")
 @onready var drop_point_detector: Area2D = $dropPointDetector
 @onready var card_state_machine: CardStateMachine = $cardStateMachine as CardStateMachine
 @onready var targets: Array[Node] = []
-@onready var original_index := self.get_index()
 
+var original_index := 0
 var parent: Control
 var tween: Tween
 var playable := true : set = _set_playable
