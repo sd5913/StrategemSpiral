@@ -13,6 +13,7 @@ const WHITE_SPRITE_MATERIAL := preload("res://art/white_sprite_material.tres")
 
 var enemy_action_picker: EnemyActionPicker
 var current_action: EnemyAction : set = set_current_action
+var is_protecting_allies := false
 
 func set_current_action(value: EnemyAction) -> void:
 	current_action = value
@@ -67,6 +68,13 @@ func update_enemy() -> void:
 func take_damage(damage: int) -> void:
 	if stats.health <= 0:
 		return
+
+	if not is_protecting_allies and get_parent():
+		for child in get_parent().get_children():
+			var ally := child as Enemy
+			if ally and ally != self and ally.is_protecting_allies and ally.stats.health > 0:
+				ally.take_damage(damage)
+				return
 		
 	sprite_2d.material = WHITE_SPRITE_MATERIAL
 	

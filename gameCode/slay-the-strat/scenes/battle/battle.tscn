@@ -11,7 +11,9 @@
 [ext_resource type="Resource" uid="uid://ctu08a861qfyk" path="res://characters/warrior/warrior.tres" id="4_oiw7q"]
 [ext_resource type="Resource" uid="uid://dux1gfivfnseo" path="res://enemies/ghost/ghost_enemy.tres" id="5_icoan"]
 [ext_resource type="Script" uid="uid://cqmepn5qithnc" path="res://scenes/ui/battle_ui.gd" id="7_icoan"]
+[ext_resource type="Resource" uid="uid://c3bvtohawgit3" path="res://enemies/gob/gob_enemy.tres" id="8_mvulk"]
 [ext_resource type="Script" uid="uid://d3plsvl8k8i2i" path="res://scenes/player/player_handler.gd" id="8_mxe8n"]
+[ext_resource type="Resource" uid="uid://b36nwrw363ix2" path="res://enemies/golem/golem_enemy.tres" id="9_w40i5"]
 [ext_resource type="PackedScene" uid="uid://b8jddn86dqd4h" path="res://scenes/ui/mana_ui.tscn" id="11_fisqk"]
 [ext_resource type="PackedScene" uid="uid://5ly43afer2n3" path="res://scenes/ui/tooltip.tscn" id="12_mxe8n"]
 [ext_resource type="Theme" uid="uid://bp6mbsxro77ws" path="res://main_theme.tres" id="13_icoan"]
@@ -44,9 +46,17 @@ debug_color = Color(0, 0.6, 0.69803923, 0.13333334)
 [node name="EnemyHandler" type="Node2D" parent="." unique_id=1477877682]
 script = ExtResource("4_kd6yx")
 
-[node name="enemy" parent="EnemyHandler" unique_id=401111257 instance=ExtResource("2_oiw7q")]
-position = Vector2(193, 90)
+[node name="GhostEnemy" parent="EnemyHandler" unique_id=401111257 instance=ExtResource("2_oiw7q")]
+position = Vector2(192, 90)
 stats = ExtResource("5_icoan")
+
+[node name="GobEnemy" parent="EnemyHandler" unique_id=352401797 instance=ExtResource("2_oiw7q")]
+position = Vector2(158, 60)
+stats = ExtResource("8_mvulk")
+
+[node name="GolemEnemy" parent="EnemyHandler" unique_id=1208377873 instance=ExtResource("2_oiw7q")]
+position = Vector2(226, 56)
+stats = ExtResource("9_w40i5")
 
 [node name="Player" parent="." unique_id=1793261537 instance=ExtResource("3_agsc7")]
 position = Vector2(52, 88)
