@@ -5,6 +5,7 @@
 [ext_resource type="Script" uid="uid://dj82qex2x2hxw" path="res://scenes/ui/hand.gd" id="2_xd4uy"]
 [ext_resource type="PackedScene" uid="uid://c7a2hi7jsnfrw" path="res://scenes/player/player.tscn" id="3_agsc7"]
 [ext_resource type="Texture2D" uid="uid://xpldripx287v" path="res://art/S2.png" id="3_kd6yx"]
+[ext_resource type="AudioStream" uid="uid://h86cb5y3cfj0" path="res://art/game_music_version1.ogg" id="3_n6gaa"]
 [ext_resource type="PackedScene" uid="uid://r0w4pngman8f" path="res://scenes/card_target_selector/card_target_selector.tscn" id="3_pll4o"]
 [ext_resource type="Script" uid="uid://d0xjbr3telci7" path="res://scenes/enemy/enemy_handler.gd" id="4_kd6yx"]
 [ext_resource type="Resource" uid="uid://ctu08a861qfyk" path="res://characters/warrior/warrior.tres" id="4_oiw7q"]
@@ -15,6 +16,7 @@
 [ext_resource type="PackedScene" uid="uid://5ly43afer2n3" path="res://scenes/ui/tooltip.tscn" id="12_mxe8n"]
 [ext_resource type="Theme" uid="uid://bp6mbsxro77ws" path="res://main_theme.tres" id="13_icoan"]
 [ext_resource type="Script" uid="uid://jmnxcqupqhs6" path="res://scenes/ui/red_flash.gd" id="15_t1kk3"]
+[ext_resource type="PackedScene" uid="uid://bmab41vwr3vp8" path="res://scenes/ui/battle_over_panel.tscn" id="17_6ofp8"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_07wxo"]
 size = Vector2(256, 100)
@@ -22,6 +24,7 @@ size = Vector2(256, 100)
 [node name="battle" type="Node2D" unique_id=1554965623]
 script = ExtResource("1_kd6yx")
 char_stats = ExtResource("4_oiw7q")
+music = ExtResource("3_n6gaa")
 metadata/_edit_lock_ = true
 
 [node name="Background" type="Sprite2D" parent="." unique_id=712301287]
@@ -42,7 +45,7 @@ debug_color = Color(0, 0.6, 0.69803923, 0.13333334)
 script = ExtResource("4_kd6yx")
 
 [node name="enemy" parent="EnemyHandler" unique_id=401111257 instance=ExtResource("2_oiw7q")]
-position = Vector2(178, 87)
+position = Vector2(193, 90)
 stats = ExtResource("5_icoan")
 
 [node name="Player" parent="." unique_id=1793261537 instance=ExtResource("3_agsc7")]
@@ -111,3 +114,9 @@ color = Color(1, 0.4509804, 0.38431373, 0)
 [node name="Timer" type="Timer" parent="RedFlash" unique_id=1117913449]
 wait_time = 0.15
 one_shot = true
+
+[node name="BattleOverLayer" type="CanvasLayer" parent="." unique_id=586726096]
+layer = 2
+
+[node name="BattleOverPanel" parent="BattleOverLayer" unique_id=29943377 instance=ExtResource("17_6ofp8")]
+visible = false

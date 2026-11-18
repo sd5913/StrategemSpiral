@@ -1,6 +1,7 @@
 extends Node2D
 
 @export var char_stats: CharacterStats
+@export var music: AudioStream
 
 @onready var battle_ui: BattleUI = $BattleUI as BattleUI
 @onready var player_handler: PlayerHandler = $PlayerHandler as PlayerHandler
@@ -23,16 +24,18 @@ func _ready() -> void:
 	start_battle(new_stats)
 	
 func start_battle(stats: CharacterStats) -> void:
+	get_tree().paused = false
+	MusicPlayer.play(music, true)
 	enemy_handler.reset_enemy_actions()
 	player_handler.start_battle(stats)
 	
 func _on_enemies_child_order_changed() -> void:
 	if enemy_handler.get_child_count() == 0:
-		print("Victory!")
+		Events.battle_over_screen_requested.emit("Enemies Slain :D", BattleOverPanel.Type.WIN)
 	
 func _on_enemy_turn_ended() -> void:
 	player_handler.start_turn()
 	enemy_handler.reset_enemy_actions()
 	
 func _on_player_died() -> void:
-	print("rough.")
+	Events.battle_over_screen_requested.emit("Game Over!", BattleOverPanel.Type.LOSE)
