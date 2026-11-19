@@ -69,6 +69,45 @@ func test_combo_doubles_the_effect_and_spends_mana_once() -> void:
 	assert_eq(stats.mana, 2)
 
 
+func test_combo_shows_direction_sprites_then_a_temporary_burst() -> void:
+	var prompt := controls.get_node_or_null("ComboPrompt") as Control
+	assert_not_null(prompt, "The battle has a visual combo prompt")
+	if prompt == null:
+		return
+	assert_false(prompt.visible)
+	assert_null(controls.get_node_or_null("Hint"), "No keyboard legend remains")
+
+	hand.add_card(BLOCK)
+	_arm(KEY_5)
+	assert_true(prompt.visible)
+	var arrows := prompt.get_node("Arrows")
+	assert_eq(arrows.get_child_count(), 3)
+	var first := arrows.get_child(0).get_node("Arrow") as Sprite2D
+	var second := arrows.get_child(1).get_node("Arrow") as Sprite2D
+	assert_not_null(first.texture)
+	assert_ne(first.rotation, second.rotation)
+	var original_color := first.modulate
+	_press(KEY_LEFT)
+	assert_ne(first.modulate, original_color, "The completed step lights up")
+	_press(KEY_DOWN)
+	_press(KEY_LEFT)
+
+	var burst := controls.get_node("ComboBurst") as Node2D
+	assert_false(prompt.visible)
+	assert_true(burst.visible)
+	assert_true(await wait_until(func() -> bool: return not burst.visible, 1.0))
+
+
+func test_slot_numbers_sit_below_the_art_and_center_on_their_owner() -> void:
+	var card := hand.get_child(0) as CardUI
+	var card_number := card.get_node("KeyboardSlot") as Label
+	var enemy_number := ghost.get_node("KeyboardSlot") as Label
+	assert_almost_eq(card_number.position.x + card_number.size.x * 0.5, card.size.x * 0.5, 1.0)
+	assert_gt(card_number.position.y, card.size.y * 0.5)
+	assert_almost_eq(enemy_number.position.x + enemy_number.size.x * 0.5, 0.0, 1.0)
+	assert_gt(enemy_number.position.y, 20.0)
+
+
 func test_selected_enemy_death_falls_back_without_renumbering() -> void:
 	if controls == null:
 		fail_test("The battle has keyboard controls")

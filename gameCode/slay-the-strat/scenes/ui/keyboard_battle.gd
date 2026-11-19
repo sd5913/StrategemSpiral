@@ -9,23 +9,26 @@ const COMBOS := {
 	Card.Type.SKILL: [KEY_LEFT, KEY_DOWN, KEY_LEFT],
 	Card.Type.POWER: [KEY_UP, KEY_UP, KEY_DOWN],
 }
-const DIRECTION_NAMES := {
-	KEY_UP: "UP",
-	KEY_RIGHT: "RIGHT",
-	KEY_DOWN: "DOWN",
-	KEY_LEFT: "LEFT",
+const DIRECTION_ANGLES := {
+	KEY_UP: 0.0,
+	KEY_RIGHT: 90.0,
+	KEY_DOWN: 180.0,
+	KEY_LEFT: 270.0,
 }
 const SLOT_STYLE := preload("res://scenes/ui/keyboard_slot.tres")
 const SELECTED_SLOT_STYLE := preload("res://scenes/ui/keyboard_slot_selected.tres")
+const DARK_INK := Color("#231725")
+const GOLD := Color("#ffe3a3")
+const MUTED_ARROW := Color("#c5b5a2")
 
 @export var enemy_handler: EnemyHandler
 @export var hand: Hand
 @export var end_turn_button: Button
 
-@onready var hint: Label = $Hint
-@onready var action: Label = $Action
-@onready var card_keys: Label = $CardKeys
-@onready var combo_timer: ProgressBar = $ComboTimer
+@onready var combo_prompt: Control = $ComboPrompt
+@onready var arrows: HBoxContainer = $ComboPrompt/Arrows
+@onready var combo_timer: ProgressBar = $ComboPrompt/ComboTimer
+@onready var combo_burst = $ComboBurst
 
 var selected_enemy: Enemy
 var enemy_slots: Array[int] = []
@@ -35,7 +38,6 @@ var combo_step := 0
 var combo_remaining := 0.0
 var round_number := 0
 var space_held := false
-var tooltip_markup := RegEx.create_from_string("\\[[^\\]]*\\]")
 
 
 func _ready() -> void:
@@ -45,16 +47,16 @@ func _ready() -> void:
 	enemy_handler.child_order_changed.connect(_refresh_enemies)
 	hand.child_order_changed.connect(_refresh_cards.call_deferred)
 	Events.player_hand_drawn.connect(_on_hand_drawn)
-	Events.player_turn_ended.connect(_on_turn_ended)
+	Events.player_turn_ended.connect(_clear_card)
 	_refresh_enemies()
-	_show_idle("Drawing cards")
+	_clear_card()
 
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_FOCUS_OUT:
 		space_held = false
 		if is_instance_valid(armed_card):
-			_show_idle("Card selection canceled")
+			_clear_card()
 
 
 func _input(event: InputEvent) -> void:
@@ -69,7 +71,7 @@ func _input(event: InputEvent) -> void:
 		return
 
 	var number := _key_number(key)
-	if number == 0 and not (key in [KEY_ENTER, KEY_KP_ENTER, KEY_ESCAPE] or DIRECTION_NAMES.has(key)):
+	if number == 0 and not (key in [KEY_ENTER, KEY_KP_ENTER, KEY_ESCAPE] or DIRECTION_ANGLES.has(key)):
 		return
 	get_viewport().set_input_as_handled()
 	if event.echo or end_turn_button.disabled or round_number == 0:
@@ -84,25 +86,25 @@ func _input(event: InputEvent) -> void:
 				selected_enemy = enemy
 				_refresh_enemies()
 	elif key == KEY_ESCAPE and is_instance_valid(armed_card):
-		_show_idle("Card selection canceled")
+		_clear_card()
 	elif key == KEY_ENTER or key == KEY_KP_ENTER:
 		if is_instance_valid(armed_card):
-			_play_card(1, "Card played")
+			_play_card(1, false)
 		else:
 			end_turn_button.pressed.emit()
-	elif is_instance_valid(armed_card) and DIRECTION_NAMES.has(key):
+	elif is_instance_valid(armed_card) and DIRECTION_ANGLES.has(key):
 		_enter_direction(key)
 
 
 func _process(delta: float) -> void:
 	if not is_instance_valid(armed_card):
-		_show_idle("Choose a card")
+		_clear_card()
 		return
 	combo_remaining -= delta
 	if combo_remaining <= 0.0:
-		_play_card(1, "Time up. Normal play.")
+		_play_card(1)
 	else:
-		_update_combo_hint()
+		combo_timer.value = combo_remaining
 
 
 func _arm_card(slot: int) -> void:
@@ -112,77 +114,72 @@ func _arm_card(slot: int) -> void:
 	if card == armed_card:
 		return
 	if not _can_play(card):
-		_show_idle("Not enough mana")
+		_clear_card()
 		return
 	armed_card = card
 	combo = COMBOS[card.card.type]
 	combo_step = 0
 	combo_remaining = maxf(MIN_COMBO_TIME, FIRST_COMBO_TIME - (round_number - 1) * ROUND_TIME_STEP)
 	combo_timer.max_value = combo_remaining
-	size.y = 33.0
-	combo_timer.show()
-	card_keys.show()
-	hint.text = tooltip_markup.sub(card.card.tooltip_text, "", true)
-	_update_combo_hint()
+	combo_timer.value = combo_remaining
+	combo_prompt.show()
+	_update_combo_arrows()
 	_refresh_cards()
 	set_process(true)
 
 
 func _enter_direction(key: Key) -> void:
 	if key != combo[combo_step]:
-		_play_card(1, "Combo missed. Normal play.")
+		_play_card(1)
 		return
 	combo_step += 1
 	if combo_step == combo.size():
-		_play_card(COMBO_BOOST, "Combo hit! Double effect.")
+		_play_card(COMBO_BOOST)
 	else:
-		_update_combo_hint()
+		_update_combo_arrows()
 
 
-func _play_card(multiplier: int, feedback: String) -> void:
+func _play_card(multiplier: int, show_burst := true) -> void:
 	var card := armed_card
 	if not _can_play(card):
-		_show_idle("Choose another card")
+		_clear_card()
 		return
 	_refresh_enemies()
 	if card.card.is_single_targeted() and not _is_alive(selected_enemy):
-		_show_idle("Choose a living target")
+		_clear_card()
 		return
 	if card.card.is_single_targeted():
 		card.targets = [selected_enemy]
 	else:
 		card.targets = [hand]
-	_show_idle(feedback)
+	if show_burst:
+		var actor := selected_enemy if card.card.is_single_targeted() else get_tree().get_first_node_in_group("player") as Node2D
+		if is_instance_valid(actor):
+			combo_burst.play(actor.get_global_transform_with_canvas().origin, multiplier == COMBO_BOOST)
+	_clear_card()
 	card.play(multiplier)
 
 
-func _show_idle(feedback: String) -> void:
+func _clear_card() -> void:
 	armed_card = null
 	set_process(false)
-	size.y = 22.0
-	combo_timer.hide()
-	card_keys.hide()
-	hint.text = "1-3 Enemy   Space+1-4 Card"
-	action.text = feedback
+	combo_prompt.hide()
 	_refresh_cards()
 
 
-func _update_combo_hint() -> void:
-	var remaining_steps := PackedStringArray()
-	for i in range(combo_step, combo.size()):
-		remaining_steps.append(DIRECTION_NAMES[combo[i]])
-	action.text = "2x %d/%d  %s  %.1fs" % [
-		combo_step, combo.size(), " ".join(remaining_steps), combo_remaining]
-	combo_timer.value = combo_remaining
+func _update_combo_arrows() -> void:
+	for i in range(combo.size()):
+		var slot := arrows.get_child(i) as Panel
+		var arrow := slot.get_node("Arrow") as Sprite2D
+		var completed := i < combo_step
+		slot.add_theme_stylebox_override("panel", SELECTED_SLOT_STYLE if completed else SLOT_STYLE)
+		arrow.rotation_degrees = DIRECTION_ANGLES[combo[i]]
+		arrow.modulate = DARK_INK if completed else (GOLD if i == combo_step else MUTED_ARROW)
 
 
 func _on_hand_drawn() -> void:
 	round_number += 1
-	_show_idle("Round %d" % round_number)
-
-
-func _on_turn_ended() -> void:
-	_show_idle("Enemy turn")
+	_clear_card()
 
 
 func _refresh_enemies() -> void:
@@ -196,30 +193,37 @@ func _refresh_enemies() -> void:
 	for i in range(enemy_slots.size()):
 		var enemy := _enemy_at(i)
 		if _is_alive(enemy):
-			_update_badge(enemy, i + 1, enemy == selected_enemy, Vector2(-25, -12))
+			_update_badge(enemy, i + 1, enemy == selected_enemy)
 
 
 func _refresh_cards() -> void:
 	for card in hand.get_children():
 		if card is CardUI and not card.is_queued_for_deletion():
-			_update_badge(card, card.get_index() + 1, card == armed_card, Vector2(13, 2))
+			_update_badge(card, card.get_index() + 1, card == armed_card)
 
 
-func _update_badge(node: Node, number: int, selected: bool, offset: Vector2) -> void:
+func _update_badge(node: Node, number: int, selected: bool) -> void:
 	var badge := node.get_node_or_null("KeyboardSlot") as Label
 	if badge == null:
 		badge = Label.new()
 		badge.name = "KeyboardSlot"
-		badge.position = offset
 		badge.custom_minimum_size = Vector2(10, 9)
 		badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		badge.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		badge.add_theme_font_size_override("font_size", 6)
 		node.add_child(badge)
+		if node is CardUI:
+			badge.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+			badge.offset_left = -5
+			badge.offset_right = 5
+			badge.offset_top = -10
+			badge.offset_bottom = -1
+		else:
+			badge.position = Vector2(-5, 22)
 	badge.text = str(number)
 	badge.add_theme_stylebox_override("normal", SELECTED_SLOT_STYLE if selected else SLOT_STYLE)
-	badge.add_theme_color_override("font_color", Color("#231725") if selected else Color("#fff0d8"))
+	badge.add_theme_color_override("font_color", DARK_INK if selected else Color("#fff0d8"))
 
 
 func _can_play(card: CardUI) -> bool:

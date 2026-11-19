@@ -3,8 +3,8 @@ extends Control
 
 signal reparent_requested(which_card_ui: CardUI)
 
-const BASE_STYLEBOX := preload("uid://dyry7x5g6s2uq")
-const HOVER_STYLEBOX := preload("uid://btv25wnqy0uoq")
+const BASE_STYLEBOX := preload("res://scenes/cardUI/card_face_stylebox.tres")
+const HOVER_STYLEBOX := preload("res://scenes/cardUI/card_face_hover_stylebox.tres")
 const DRAGGING_STYLEBOX := preload("uid://ca54yd7w2gcv0")
 
 @export var card: Card : set = _set_card

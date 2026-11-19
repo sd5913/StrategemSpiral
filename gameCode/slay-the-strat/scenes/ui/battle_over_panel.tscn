@@ -45,11 +45,11 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(50, 14)
 layout_mode = 2
 size_flags_horizontal = 4
-text = "Close (Esc)"
+text = "Close"
 
 [node name="RestartButton" type="Button" parent="VBoxContainer" unique_id=1662437051]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(50, 14)
 layout_mode = 2
 size_flags_horizontal = 4
-text = "Retry (Enter)"
+text = "Play again"
