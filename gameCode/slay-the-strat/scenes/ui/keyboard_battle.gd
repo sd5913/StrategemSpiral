@@ -216,10 +216,10 @@ func _update_badge(node: Node, number: int, selected: bool) -> void:
 			badge.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
 			badge.offset_left = -KeyboardKeycap.SIZE.x * 0.5
 			badge.offset_right = KeyboardKeycap.SIZE.x * 0.5
-			badge.offset_top = -10
+			badge.offset_top = -KeyboardKeycap.SIZE.y - 1
 			badge.offset_bottom = -1
 		else:
-			badge.position = Vector2(-5, 22)
+			badge.position = Vector2(-KeyboardKeycap.SIZE.x * 0.5, 22)
 	badge.set_key(number, selected)
 
 
