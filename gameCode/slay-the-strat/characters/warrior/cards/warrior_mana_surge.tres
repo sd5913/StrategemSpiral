@@ -1,0 +1,13 @@
+[gd_resource type="Resource" format=3 uid="uid://c71870dkofeko"]
+
+[ext_resource type="Texture2D" uid="uid://c2xhttrclo1r7" path="res://art/tile_0116.png" id="1_1eois"]
+[ext_resource type="Script" uid="uid://dkdyx4yl4kxea" path="res://characters/warrior/cards/warrior_mana_surge.gd" id="1_yuatr"]
+
+[resource]
+script = ExtResource("1_yuatr")
+id = "mana_surge"
+type = 2
+cost = 1
+icon = ExtResource("1_1eois")
+tooltip_text = "[center]Gain 2 overflow mana next turn[/center]"
+metadata/_custom_type_script = "uid://c2e2e2q6iflwi"

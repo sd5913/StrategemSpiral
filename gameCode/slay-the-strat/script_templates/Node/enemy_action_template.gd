@@ -1,5 +1,5 @@
-#meta-name: EnemyAction
-#meta-description: An action that can be performed by an enemy during its own turn.
+# meta-name: EnemyAction
+# meta-description: An action that can be performed by an enemy during its own turn.
 
 extends EnemyAction
 

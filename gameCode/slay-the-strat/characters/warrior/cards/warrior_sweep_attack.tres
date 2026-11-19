@@ -1,0 +1,15 @@
+[gd_resource type="Resource" format=3 uid="uid://bs7n551vqqat3"]
+
+[ext_resource type="Script" uid="uid://eni5oas4a7ii" path="res://characters/warrior/cards/warrior_sweep_attack.gd" id="1_6tdsj"]
+[ext_resource type="Texture2D" uid="uid://dojlh80rte165" path="res://art/tile_0107.png" id="1_lehm2"]
+[ext_resource type="AudioStream" uid="uid://dixklg6g4jnsq" path="res://art/slash.ogg" id="3_xdsry"]
+
+[resource]
+script = ExtResource("1_6tdsj")
+id = "warrior_sweep"
+target = 2
+cost = 2
+icon = ExtResource("1_lehm2")
+tooltip_text = "[center]Deals[color=\"ff0000\"] 3 [/color]cleave[/center]"
+sound = ExtResource("3_xdsry")
+metadata/_custom_type_script = "uid://c2e2e2q6iflwi"
