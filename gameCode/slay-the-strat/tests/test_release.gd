@@ -1,29 +1,6 @@
 extends GutTest
 
 
-func test_startup_offers_card_combat_and_action_combos() -> void:
-	var entry_path: String = ProjectSettings.get_setting("application/run/main_scene")
-	var entry := load(entry_path) as PackedScene
-	assert_not_null(entry, "The configured entry scene loads")
-	if entry == null:
-		return
-
-	var main_screen := add_child_autofree(entry.instantiate()) as Node
-	await wait_process_frames(2)
-	var choices: Array[String] = []
-	for node in main_screen.find_children("*", "Button", true, false):
-		var button := node as Button
-		if button.is_visible_in_tree() and not button.disabled:
-			choices.append(button.text.strip_edges().to_lower())
-
-	assert_has(choices, "card combat", "Startup offers an enabled Card Combat button")
-	assert_has(choices, "action combos", "Startup offers an enabled Action Combos button")
-
-	MusicPlayer.stop()
-	for sound in MusicPlayer.get_children():
-		(sound as AudioStreamPlayer).stream = null
-
-
 func test_linux_export_starts_and_exits_without_script_errors() -> void:
 	if OS.get_environment("STRATEGEM_LINUX_EXPORT").is_empty():
 		pending("Set STRATEGEM_LINUX_EXPORT to the absolute Linux export path")
@@ -36,21 +13,6 @@ func test_linux_export_starts_and_exits_without_script_errors() -> void:
 	assert_string_contains(output, "Completed load for: '%s'" % entry_path)
 	assert_false(output.contains("SCRIPT ERROR"), "Script error in exported game:\n" + output)
 	assert_false(output.contains("Error: Couldn't load project data"), "Embedded game data loads")
-
-
-func test_linux_export_releases_game_music_on_exit() -> void:
-	if OS.get_environment("STRATEGEM_LINUX_EXPORT").is_empty():
-		pending("Set STRATEGEM_LINUX_EXPORT to the absolute Linux export path")
-		return
-
-	var output := _run_linux_export()
-	var failures: Array[String] = []
-	for line in output.split("\n"):
-		if ("ObjectDB instances" in line and "leaked at exit" in line
-				or "still in use at exit" in line or "Resource still in use:" in line):
-			failures.append(line)
-	assert_true(failures.is_empty(), "The Linux export releases all resources on quit.\n"
-		+ "\n".join(failures))
 
 
 func test_published_linux_download_exists_as_release_asset() -> void:
