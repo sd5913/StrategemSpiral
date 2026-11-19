@@ -45,3 +45,16 @@ jobs:
           name: strategem-spiral-builds
           path: gameCode/slay-the-strat/build/
           if-no-files-found: error
+
+      - name: Fetch published release metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view --repo "$GITHUB_REPOSITORY" --json tagName,body,assets > "$RUNNER_TEMP/strategem-release.json"
+
+      - name: Run GUT gameplay and release tests
+        env:
+          STRATEGEM_LINUX_EXPORT: ${{ github.workspace }}/gameCode/slay-the-strat/build/linux/StrategemSpiral.x86_64
+          STRATEGEM_RELEASE_METADATA: ${{ runner.temp }}/strategem-release.json
+        run: |
+          GODOT_BIN="$HOME/.cache/sd5913-godot-4.7.2/godot" bash .codex/test.sh
