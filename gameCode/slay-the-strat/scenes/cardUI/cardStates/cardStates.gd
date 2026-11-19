@@ -26,3 +26,9 @@ func on_mouse_entered() -> void:
 
 func on_mouse_exited() -> void:
 	pass
+
+func release_at(viewport_position: Vector2) -> void:
+	get_viewport().set_input_as_handled()
+	card_ui.resolve_drop_at(viewport_position)
+	var next_state := State.BASE if card_ui.targets.is_empty() else State.RELEASED
+	transition_requested.emit(self, next_state)

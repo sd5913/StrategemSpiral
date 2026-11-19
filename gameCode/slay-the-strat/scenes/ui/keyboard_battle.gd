@@ -47,6 +47,7 @@ func _ready() -> void:
 	hand.child_order_changed.connect(_refresh_cards.call_deferred)
 	Events.player_hand_drawn.connect(_on_hand_drawn)
 	Events.player_turn_ended.connect(_clear_card)
+	Events.card_drag_started.connect(_on_card_drag_started)
 	_refresh_enemies()
 	_clear_card()
 
@@ -176,6 +177,13 @@ func _on_hand_drawn() -> void:
 	_clear_card()
 
 
+func _on_card_drag_started(card: CardUI) -> void:
+	var badge := card.get_node_or_null("KeyboardSlot") as KeyboardKeycap
+	if badge:
+		badge.hide()
+	_clear_card()
+
+
 func _refresh_enemies() -> void:
 	if not is_instance_valid(selected_enemy) or not _is_alive(selected_enemy):
 		selected_enemy = null
@@ -197,27 +205,22 @@ func _refresh_cards() -> void:
 
 
 func _update_badge(node: Node, number: int, selected: bool) -> void:
-	var badge := node.get_node_or_null("KeyboardSlot") as Label
+	var badge := node.get_node_or_null("KeyboardSlot") as KeyboardKeycap
 	if badge == null:
-		badge = Label.new()
+		badge = KeyboardKeycap.new()
 		badge.name = "KeyboardSlot"
-		badge.custom_minimum_size = Vector2(10, 9)
+		badge.custom_minimum_size = KeyboardKeycap.SIZE
 		badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		badge.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		badge.add_theme_font_size_override("font_size", 6)
 		node.add_child(badge)
 		if node is CardUI:
 			badge.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
-			badge.offset_left = -5
-			badge.offset_right = 5
+			badge.offset_left = -KeyboardKeycap.SIZE.x * 0.5
+			badge.offset_right = KeyboardKeycap.SIZE.x * 0.5
 			badge.offset_top = -10
 			badge.offset_bottom = -1
 		else:
 			badge.position = Vector2(-5, 22)
-	badge.text = str(number)
-	badge.add_theme_stylebox_override("normal", SELECTED_SLOT_STYLE if selected else SLOT_STYLE)
-	badge.add_theme_color_override("font_color", DARK_INK if selected else Color("#fff0d8"))
+	badge.set_key(number, selected)
 
 
 func _can_play(card: CardUI) -> bool:

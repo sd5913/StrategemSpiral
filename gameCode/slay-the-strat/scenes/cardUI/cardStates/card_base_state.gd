@@ -9,7 +9,10 @@ func enter() -> void:
 		card_ui.tween.kill()
 		
 	card_ui.panel.set("theme_override_styles/panel", card_ui.BASE_STYLEBOX)
-	card_ui.reparent_requested.emit(card_ui)
+	card_ui.drop_point_detector.monitoring = false
+	card_ui.targets.clear()
+	if card_ui.get_parent() != card_ui.parent:
+		card_ui.reparent_requested.emit(card_ui)
 	card_ui.pivot_offset = Vector2.ZERO
 	Events.tooltip_hide_requested.emit()
 	

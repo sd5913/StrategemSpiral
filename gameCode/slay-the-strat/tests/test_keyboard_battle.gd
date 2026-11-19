@@ -102,8 +102,8 @@ func test_combo_shows_direction_sprites_then_a_temporary_burst() -> void:
 
 func test_slot_numbers_sit_below_the_art_and_center_on_their_owner() -> void:
 	var card := hand.get_child(0) as CardUI
-	var card_number := card.get_node("KeyboardSlot") as Label
-	var enemy_number := ghost.get_node("KeyboardSlot") as Label
+	var card_number := card.get_node("KeyboardSlot") as Control
+	var enemy_number := ghost.get_node("KeyboardSlot") as Control
 	assert_almost_eq(card_number.position.x + card_number.size.x * 0.5, card.size.x * 0.5, 1.0)
 	assert_gt(card_number.position.y, card.size.y * 0.5)
 	assert_almost_eq(enemy_number.position.x + enemy_number.size.x * 0.5, 0.0, 1.0)
