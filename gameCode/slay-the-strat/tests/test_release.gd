@@ -15,6 +15,21 @@ func test_linux_export_starts_and_exits_without_script_errors() -> void:
 	assert_false(output.contains("Error: Couldn't load project data"), "Embedded game data loads")
 
 
+func test_linux_export_releases_game_music_on_exit() -> void:
+	if OS.get_environment("STRATEGEM_LINUX_EXPORT").is_empty():
+		pending("Set STRATEGEM_LINUX_EXPORT to the absolute Linux export path")
+		return
+
+	var output := _run_linux_export()
+	var failures: Array[String] = []
+	for line in output.split("\n"):
+		if ("ObjectDB instances" in line and "leaked at exit" in line
+				or "still in use at exit" in line or "Resource still in use:" in line):
+			failures.append(line)
+	assert_true(failures.is_empty(), "The Linux export releases all resources on quit.\n"
+		+ "\n".join(failures))
+
+
 func test_published_linux_download_exists_as_release_asset() -> void:
 	var metadata_path := OS.get_environment("STRATEGEM_RELEASE_METADATA")
 	if metadata_path.is_empty():
