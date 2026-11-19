@@ -16,8 +16,8 @@ func test_startup_offers_card_combat_and_action_combos() -> void:
 		if button.is_visible_in_tree() and not button.disabled:
 			choices.append(button.text.strip_edges().to_lower())
 
-	assert_has(choices, "card combat", "Startup offers a playable Card Combat choice")
-	assert_has(choices, "action combos", "Startup offers a playable Action Combos choice")
+	assert_has(choices, "card combat", "Startup offers an enabled Card Combat button")
+	assert_has(choices, "action combos", "Startup offers an enabled Action Combos button")
 
 	MusicPlayer.stop()
 	for sound in MusicPlayer.get_children():
@@ -30,7 +30,10 @@ func test_linux_export_starts_and_exits_without_script_errors() -> void:
 		return
 
 	var output := _run_linux_export()
-	assert_string_contains(output, "Completed load for: 'res://")
+	var entry_path: String = ProjectSettings.get_setting("application/run/main_scene")
+	if entry_path.begins_with("uid://"):
+		entry_path = ResourceUID.get_id_path(ResourceUID.text_to_id(entry_path))
+	assert_string_contains(output, "Completed load for: '%s'" % entry_path)
 	assert_false(output.contains("SCRIPT ERROR"), "Script error in exported game:\n" + output)
 	assert_false(output.contains("Error: Couldn't load project data"), "Embedded game data loads")
 
@@ -50,7 +53,7 @@ func test_linux_export_releases_game_music_on_exit() -> void:
 		+ "\n".join(failures))
 
 
-func test_published_linux_download_filenames_exist_as_release_assets() -> void:
+func test_published_linux_download_exists_as_release_asset() -> void:
 	var metadata_path := OS.get_environment("STRATEGEM_RELEASE_METADATA")
 	if metadata_path.is_empty():
 		pending("Set STRATEGEM_RELEASE_METADATA to the gh release view JSON path")
@@ -72,10 +75,11 @@ func test_published_linux_download_filenames_exist_as_release_assets() -> void:
 	var asset_names: Array[String] = []
 	for asset in metadata.assets:
 		asset_names.append(asset.name)
-	var filename := RegEx.create_from_string("\\x60([^\\x60]+\\.(?:zip|x86_64|AppImage|tar\\.gz))\\x60")
-	var referenced := filename.search_all(download.get_string())
-	assert_false(referenced.is_empty(), "The Linux download entry names an artifact")
-	for artifact in referenced:
+	# The first filename is the download. An archive can contain the executable named later.
+	var filename := RegEx.create_from_string("[\\x60\\[]([^\\x60\\]]+\\.(?:zip|x86_64|AppImage|tar\\.gz))[\\x60\\]]")
+	var artifact := filename.search(download.get_string())
+	assert_not_null(artifact, "The Linux download entry names an artifact")
+	if artifact != null:
 		var name := artifact.get_string(1)
 		assert_has(asset_names, name, "%s names %s as a Linux download" % [metadata.tagName, name])
 
