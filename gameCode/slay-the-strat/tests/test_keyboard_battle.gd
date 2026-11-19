@@ -32,21 +32,23 @@ func after_each() -> void:
 		(sound as AudioStreamPlayer).stream = null
 
 
-func test_number_keys_target_enemies_and_default_to_the_first() -> void:
+func test_shift_and_number_target_enemies_and_default_to_the_first() -> void:
 	assert_not_null(controls, "The battle has keyboard controls")
 	if controls == null:
 		return
 	assert_same(controls.selected_enemy, ghost)
-	_press(KEY_3)
+	_press(KEY_3, true)
 	assert_same(controls.selected_enemy, golem)
-	_press(KEY_6)
+	_press(KEY_6, true)
 	assert_same(controls.selected_enemy, golem)
 
 
-func test_space_and_digit_arm_a_card_and_enter_plays_it_at_the_selected_enemy() -> void:
+func test_digit_arms_a_card_and_enter_plays_it_at_the_selected_enemy() -> void:
 	hand.add_card(ATTACK)
-	_press(KEY_2)
-	_arm(KEY_5)
+	_press(KEY_2, true)
+	_press(KEY_5)
+	assert_same(controls.armed_card, hand.get_child(4))
+	assert_same(controls.selected_enemy, goblin)
 	assert_eq(stats.mana, 3, "Arming does not spend mana")
 	_press(KEY_ENTER)
 	await wait_until(func() -> bool: return goblin.stats.health == 1 and goblin.sprite_2d.material == null, 2.0)
@@ -57,15 +59,15 @@ func test_space_and_digit_arm_a_card_and_enter_plays_it_at_the_selected_enemy() 
 	assert_eq(hand.get_child_count(), 4)
 
 
-func test_combo_doubles_the_effect_and_spends_mana_once() -> void:
+func test_combo_adds_one_to_the_effect_and_spends_mana_once() -> void:
 	hand.add_card(BLOCK)
-	_arm(KEY_5)
+	_press(KEY_5)
 	_press(KEY_LEFT)
 	_key(KEY_LEFT, true, true)
 	_press(KEY_DOWN)
 	_press(KEY_LEFT)
 
-	assert_eq(stats.block, 10)
+	assert_eq(stats.block, 6)
 	assert_eq(stats.mana, 2)
 
 
@@ -78,7 +80,7 @@ func test_combo_shows_direction_sprites_then_a_temporary_burst() -> void:
 	assert_null(controls.get_node_or_null("Hint"), "No keyboard legend remains")
 
 	hand.add_card(BLOCK)
-	_arm(KEY_5)
+	_press(KEY_5)
 	assert_true(prompt.visible)
 	var arrows := prompt.get_node("Arrows")
 	assert_eq(arrows.get_child_count(), 3)
@@ -112,8 +114,9 @@ func test_selected_enemy_death_falls_back_without_renumbering() -> void:
 	if controls == null:
 		fail_test("The battle has keyboard controls")
 		return
+	ghost.stats.health = 7
 	hand.add_card(ATTACK)
-	_arm(KEY_5)
+	_press(KEY_5)
 	_press(KEY_UP)
 	_press(KEY_RIGHT)
 	_press(KEY_DOWN)
@@ -121,7 +124,7 @@ func test_selected_enemy_death_falls_back_without_renumbering() -> void:
 
 	assert_false(is_instance_valid(ghost))
 	assert_same(controls.selected_enemy, goblin)
-	_press(KEY_3)
+	_press(KEY_3, true)
 	assert_same(controls.selected_enemy, golem)
 
 
@@ -130,12 +133,12 @@ func test_wrong_arrow_and_timeout_play_the_normal_card() -> void:
 	if controls == null:
 		return
 	hand.add_card(BLOCK)
-	_arm(KEY_5)
+	_press(KEY_5)
 	_press(KEY_RIGHT)
 	assert_eq(stats.block, 5)
 	await wait_process_frames(2)
 	hand.add_card(BLOCK)
-	_arm(KEY_5)
+	_press(KEY_5)
 	controls._process(6.0)
 	assert_eq(stats.block, 10)
 	assert_eq(stats.mana, 1)
@@ -143,7 +146,7 @@ func test_wrong_arrow_and_timeout_play_the_normal_card() -> void:
 
 func test_escape_cancels_without_spending_and_pressing_enter_ends_the_turn() -> void:
 	hand.add_card(BLOCK)
-	_arm(KEY_5)
+	_press(KEY_5)
 	_press(KEY_ESCAPE)
 	assert_eq(stats.mana, 3)
 	assert_eq(stats.block, 0)
@@ -158,33 +161,28 @@ func test_later_hands_have_less_combo_time_with_a_floor() -> void:
 	if controls == null:
 		return
 	hand.add_card(BLOCK)
-	_arm(KEY_5)
+	_press(KEY_5)
 	assert_eq(controls.combo_timer.max_value, 5.0)
 	_press(KEY_ESCAPE)
 	Events.player_hand_drawn.emit()
-	_arm(KEY_5)
+	_press(KEY_5)
 	assert_eq(controls.combo_timer.max_value, 4.5)
 	_press(KEY_ESCAPE)
 	for i in range(14):
 		Events.player_hand_drawn.emit()
-	_arm(KEY_5)
+	_press(KEY_5)
 	assert_eq(controls.combo_timer.max_value, 1.5)
 
 
-func _arm(key: Key) -> void:
-	_key(KEY_SPACE, true)
-	_press(key)
-	_key(KEY_SPACE, false)
+func _press(key: Key, shift := false) -> void:
+	_key(key, true, false, shift)
+	_key(key, false, false, shift)
 
 
-func _press(key: Key) -> void:
-	_key(key, true)
-	_key(key, false)
-
-
-func _key(value: Key, pressed: bool, echo := false) -> void:
+func _key(value: Key, pressed: bool, echo := false, shift := false) -> void:
 	var event := InputEventKey.new()
 	event.physical_keycode = value
 	event.pressed = pressed
 	event.echo = echo
+	event.shift_pressed = shift
 	get_viewport().push_input(event)

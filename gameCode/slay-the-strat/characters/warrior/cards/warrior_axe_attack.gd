@@ -1,7 +1,7 @@
 extends Card
 
-func apply_effects(targets: Array[Node], effect_multiplier: int) -> void:
+func apply_effects(targets: Array[Node], effect_bonus: int) -> void:
 	var damage_effect := DamageEffect.new()
-	damage_effect.amount = 6 * effect_multiplier
+	damage_effect.amount = 6 + effect_bonus
 	damage_effect.sound = sound
 	damage_effect.execute(targets)

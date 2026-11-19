@@ -3,7 +3,7 @@ extends Control
 const FIRST_COMBO_TIME := 5.0
 const ROUND_TIME_STEP := 0.5
 const MIN_COMBO_TIME := 1.5
-const COMBO_BOOST := 2
+const COMBO_BONUS := 1
 const COMBOS := {
 	Card.Type.ATTACK: [KEY_UP, KEY_RIGHT, KEY_DOWN],
 	Card.Type.SKILL: [KEY_LEFT, KEY_DOWN, KEY_LEFT],
@@ -37,7 +37,6 @@ var combo: Array
 var combo_step := 0
 var combo_remaining := 0.0
 var round_number := 0
-var space_held := false
 
 
 func _ready() -> void:
@@ -54,7 +53,6 @@ func _ready() -> void:
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_FOCUS_OUT:
-		space_held = false
 		if is_instance_valid(armed_card):
 			_clear_card()
 
@@ -63,10 +61,6 @@ func _input(event: InputEvent) -> void:
 	if not event is InputEventKey:
 		return
 	var key: Key = event.physical_keycode if event.physical_keycode != KEY_NONE else event.keycode
-	if key == KEY_SPACE:
-		space_held = event.pressed
-		get_viewport().set_input_as_handled()
-		return
 	if not event.pressed:
 		return
 
@@ -78,7 +72,7 @@ func _input(event: InputEvent) -> void:
 		return
 
 	if number > 0:
-		if space_held:
+		if not event.shift_pressed:
 			_arm_card(number - 1)
 		elif number <= enemy_slots.size():
 			var enemy := _enemy_at(number - 1)
@@ -89,7 +83,7 @@ func _input(event: InputEvent) -> void:
 		_clear_card()
 	elif key == KEY_ENTER or key == KEY_KP_ENTER:
 		if is_instance_valid(armed_card):
-			_play_card(1, false)
+			_play_card(0, false)
 		else:
 			end_turn_button.pressed.emit()
 	elif is_instance_valid(armed_card) and DIRECTION_ANGLES.has(key):
@@ -102,7 +96,7 @@ func _process(delta: float) -> void:
 		return
 	combo_remaining -= delta
 	if combo_remaining <= 0.0:
-		_play_card(1)
+		_play_card(0)
 	else:
 		combo_timer.value = combo_remaining
 
@@ -130,16 +124,16 @@ func _arm_card(slot: int) -> void:
 
 func _enter_direction(key: Key) -> void:
 	if key != combo[combo_step]:
-		_play_card(1)
+		_play_card(0)
 		return
 	combo_step += 1
 	if combo_step == combo.size():
-		_play_card(COMBO_BOOST)
+		_play_card(COMBO_BONUS)
 	else:
 		_update_combo_arrows()
 
 
-func _play_card(multiplier: int, show_burst := true) -> void:
+func _play_card(effect_bonus: int, show_burst := true) -> void:
 	var card := armed_card
 	if not _can_play(card):
 		_clear_card()
@@ -155,9 +149,9 @@ func _play_card(multiplier: int, show_burst := true) -> void:
 	if show_burst:
 		var actor := selected_enemy if card.card.is_single_targeted() else get_tree().get_first_node_in_group("player") as Node2D
 		if is_instance_valid(actor):
-			combo_burst.play(actor.get_global_transform_with_canvas().origin, multiplier == COMBO_BOOST)
+			combo_burst.play(actor.get_global_transform_with_canvas().origin, effect_bonus > 0)
 	_clear_card()
-	card.play(multiplier)
+	card.play(effect_bonus)
 
 
 func _clear_card() -> void:

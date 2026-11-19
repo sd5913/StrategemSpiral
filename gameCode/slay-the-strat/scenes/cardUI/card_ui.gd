@@ -37,11 +37,11 @@ func animate_to_position(new_position: Vector2, duration: float) -> void:
 	tween = create_tween().set_trans(Tween.TRANS_CIRC).set_ease(Tween.EASE_OUT)
 	tween.tween_property(self, "global_position", new_position, duration)
 	
-func play(effect_multiplier := 1) -> void:
+func play(effect_bonus := 0) -> void:
 	if not card:
 		return
 	
-	card.play(targets, char_stats, effect_multiplier)
+	card.play(targets, char_stats, effect_bonus)
 	queue_free()
 	
 func _on_gui_input(event: InputEvent) -> void:

@@ -3,11 +3,11 @@ extends Card
 var _pending_mana_overflow := 0
 var _awaiting_hand_draw := false
 
-func apply_effects(targets: Array[Node], effect_multiplier: int) -> void:
+func apply_effects(targets: Array[Node], effect_bonus: int) -> void:
 	for target in targets:
 		var player := target as Player
 		if player:
-			_pending_mana_overflow += 2 * effect_multiplier
+			_pending_mana_overflow += 2 + effect_bonus
 			if not _awaiting_hand_draw:
 				_awaiting_hand_draw = true
 				Events.player_hand_drawn.connect(_grant_mana_overflow.bind(player.stats), CONNECT_ONE_SHOT)
