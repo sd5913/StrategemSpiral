@@ -1,0 +1,151 @@
+extends GutTest
+
+const BATTLE := preload("res://scenes/battle/battle.tscn")
+const ATTACK := preload("res://characters/warrior/cards/warrior_axe_attack.tres")
+const BLOCK := preload("res://characters/warrior/cards/warrior_block.tres")
+
+var battle: Node2D
+var controls: Node
+var stats: CharacterStats
+var hand: Hand
+var ghost: Enemy
+var goblin: Enemy
+var golem: Enemy
+
+
+func before_each() -> void:
+	battle = BATTLE.instantiate()
+	battle.music = null
+	add_child_autofree(battle)
+	controls = battle.get_node_or_null("BattleUI/KeyboardBattle")
+	stats = battle.player.stats
+	hand = battle.battle_ui.hand
+	ghost = battle.enemy_handler.get_node("GhostEnemy")
+	goblin = battle.enemy_handler.get_node("GobEnemy")
+	golem = battle.enemy_handler.get_node("GolemEnemy")
+	await wait_for_signal(Events.player_hand_drawn, 3.0)
+
+
+func after_each() -> void:
+	SfxPlayer.stop()
+	for sound in SfxPlayer.get_children():
+		(sound as AudioStreamPlayer).stream = null
+
+
+func test_number_keys_target_enemies_and_default_to_the_first() -> void:
+	assert_not_null(controls, "The battle has keyboard controls")
+	if controls == null:
+		return
+	assert_same(controls.selected_enemy, ghost)
+	_press(KEY_3)
+	assert_same(controls.selected_enemy, golem)
+	_press(KEY_6)
+	assert_same(controls.selected_enemy, golem)
+
+
+func test_space_and_digit_arm_a_card_and_enter_plays_it_at_the_selected_enemy() -> void:
+	hand.add_card(ATTACK)
+	_press(KEY_2)
+	_arm(KEY_5)
+	assert_eq(stats.mana, 3, "Arming does not spend mana")
+	_press(KEY_ENTER)
+	await wait_until(func() -> bool: return goblin.stats.health == 1 and goblin.sprite_2d.material == null, 2.0)
+
+	assert_eq(goblin.stats.health, 1)
+	assert_eq(ghost.stats.health, 10)
+	assert_eq(stats.mana, 2)
+	assert_eq(hand.get_child_count(), 4)
+
+
+func test_combo_doubles_the_effect_and_spends_mana_once() -> void:
+	hand.add_card(BLOCK)
+	_arm(KEY_5)
+	_press(KEY_LEFT)
+	_key(KEY_LEFT, true, true)
+	_press(KEY_DOWN)
+	_press(KEY_LEFT)
+
+	assert_eq(stats.block, 10)
+	assert_eq(stats.mana, 2)
+
+
+func test_selected_enemy_death_falls_back_without_renumbering() -> void:
+	if controls == null:
+		fail_test("The battle has keyboard controls")
+		return
+	hand.add_card(ATTACK)
+	_arm(KEY_5)
+	_press(KEY_UP)
+	_press(KEY_RIGHT)
+	_press(KEY_DOWN)
+	await wait_until(func() -> bool: return not is_instance_valid(ghost), 2.0)
+
+	assert_false(is_instance_valid(ghost))
+	assert_same(controls.selected_enemy, goblin)
+	_press(KEY_3)
+	assert_same(controls.selected_enemy, golem)
+
+
+func test_wrong_arrow_and_timeout_play_the_normal_card() -> void:
+	assert_not_null(controls, "The battle has keyboard controls")
+	if controls == null:
+		return
+	hand.add_card(BLOCK)
+	_arm(KEY_5)
+	_press(KEY_RIGHT)
+	assert_eq(stats.block, 5)
+	await wait_process_frames(2)
+	hand.add_card(BLOCK)
+	_arm(KEY_5)
+	controls._process(6.0)
+	assert_eq(stats.block, 10)
+	assert_eq(stats.mana, 1)
+
+
+func test_escape_cancels_without_spending_and_pressing_enter_ends_the_turn() -> void:
+	hand.add_card(BLOCK)
+	_arm(KEY_5)
+	_press(KEY_ESCAPE)
+	assert_eq(stats.mana, 3)
+	assert_eq(stats.block, 0)
+	watch_signals(Events)
+	_press(KEY_ENTER)
+	assert_signal_emitted(Events.player_turn_ended)
+	assert_true(battle.battle_ui.end_turn_button.disabled)
+
+
+func test_later_hands_have_less_combo_time_with_a_floor() -> void:
+	assert_not_null(controls, "The battle has keyboard controls")
+	if controls == null:
+		return
+	hand.add_card(BLOCK)
+	_arm(KEY_5)
+	assert_eq(controls.combo_timer.max_value, 5.0)
+	_press(KEY_ESCAPE)
+	Events.player_hand_drawn.emit()
+	_arm(KEY_5)
+	assert_eq(controls.combo_timer.max_value, 4.5)
+	_press(KEY_ESCAPE)
+	for i in range(14):
+		Events.player_hand_drawn.emit()
+	_arm(KEY_5)
+	assert_eq(controls.combo_timer.max_value, 1.5)
+
+
+func _arm(key: Key) -> void:
+	_key(KEY_SPACE, true)
+	_press(key)
+	_key(KEY_SPACE, false)
+
+
+func _press(key: Key) -> void:
+	_key(key, true)
+	_key(key, false)
+
+
+func _key(value: Key, pressed: bool, echo := false) -> void:
+	var event := InputEventKey.new()
+	event.physical_keycode = value
+	event.pressed = pressed
+	event.echo = echo
+	get_viewport().push_input(event)

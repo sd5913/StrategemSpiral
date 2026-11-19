@@ -32,14 +32,14 @@ func _get_targets(targets: Array[Node]) -> Array[Node]:
 		_:
 			return []
 		
-func play(targets: Array[Node], char_stats: CharacterStats) -> void:
+func play(targets: Array[Node], char_stats: CharacterStats, effect_multiplier := 1) -> void:
 	Events.card_played.emit(self)
 	char_stats.mana -= cost
 	
 	if is_single_targeted():
-		apply_effects(targets)
+		apply_effects(targets, effect_multiplier)
 	else:
-		apply_effects(_get_targets(targets))
+		apply_effects(_get_targets(targets), effect_multiplier)
 		
-func apply_effects(_targets: Array[Node]) -> void:
+func apply_effects(_targets: Array[Node], _effect_multiplier: int) -> void:
 	pass

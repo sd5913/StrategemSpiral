@@ -19,6 +19,7 @@
 [ext_resource type="Theme" uid="uid://bp6mbsxro77ws" path="res://main_theme.tres" id="13_icoan"]
 [ext_resource type="Script" uid="uid://jmnxcqupqhs6" path="res://scenes/ui/red_flash.gd" id="15_t1kk3"]
 [ext_resource type="PackedScene" uid="uid://bmab41vwr3vp8" path="res://scenes/ui/battle_over_panel.tscn" id="17_6ofp8"]
+[ext_resource type="PackedScene" path="res://scenes/ui/keyboard_battle.tscn" id="18_keyboard"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_07wxo"]
 size = Vector2(256, 100)
@@ -99,14 +100,19 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -48.0
+offset_left = -67.0
 offset_top = -17.0
 offset_right = -3.0
 offset_bottom = -3.0
 grow_horizontal = 0
 grow_vertical = 0
 theme = ExtResource("13_icoan")
-text = "End Turn"
+text = "End Turn (Enter)"
+
+[node name="KeyboardBattle" parent="BattleUI" node_paths=PackedStringArray("enemy_handler", "hand", "end_turn_button") instance=ExtResource("18_keyboard")]
+enemy_handler = NodePath("../../EnemyHandler")
+hand = NodePath("../hand")
+end_turn_button = NodePath("../EndTurnButton")
 
 [node name="RedFlash" type="CanvasLayer" parent="." unique_id=925257108]
 layer = 2
