@@ -1,0 +1,38 @@
+[gd_scene format=3 uid="uid://c8arvavgpbcca"]
+
+[ext_resource type="Script" uid="uid://dy2bljrymyp8t" path="res://scenes/enemy/enemy_action_picker.gd" id="1_jcasi"]
+[ext_resource type="Script" uid="uid://bvybymrxkcw84" path="res://enemies/gob/gob_attack_action.gd" id="2_4nsrj"]
+[ext_resource type="Script" uid="uid://bu8y6e545kx3k" path="res://enemies/gob/gob_block_action.gd" id="3_aq60h"]
+[ext_resource type="Texture2D" uid="uid://hutk60ia3enk" path="res://art/boom.png" id="4_jnukw"]
+[ext_resource type="Script" uid="uid://bsfb5mk7kp8l5" path="res://custom_resources/intent.gd" id="5_uutpp"]
+[ext_resource type="AudioStream" uid="uid://k8m4o3hlwm7l" path="res://art/enemy_block.ogg" id="7_fctho"]
+[ext_resource type="AudioStream" uid="uid://3t6kgdcgegx4" path="res://art/bang.mp3" id="7_jnukw"]
+[ext_resource type="Texture2D" uid="uid://oe7v35ii8vrs" path="res://art/tile_0102.png" id="8_vn1gy"]
+
+[sub_resource type="Resource" id="Resource_aq60h"]
+script = ExtResource("5_uutpp")
+number = "14"
+icon = ExtResource("4_jnukw")
+metadata/_custom_type_script = "uid://bsfb5mk7kp8l5"
+
+[sub_resource type="Resource" id="Resource_dxbme"]
+script = ExtResource("5_uutpp")
+icon = ExtResource("8_vn1gy")
+metadata/_custom_type_script = "uid://bsfb5mk7kp8l5"
+
+[node name="GobEnemyAI" type="Node" unique_id=1796845153]
+script = ExtResource("1_jcasi")
+
+[node name="GobAttackAction" type="Node" parent="." unique_id=1705137520]
+script = ExtResource("2_4nsrj")
+type = 1
+sound = ExtResource("7_jnukw")
+intent = SubResource("Resource_aq60h")
+chance_weight = 6.0
+
+[node name="GobBlockAction" type="Node" parent="." unique_id=1263822581]
+script = ExtResource("3_aq60h")
+type = 1
+sound = ExtResource("7_fctho")
+intent = SubResource("Resource_dxbme")
+chance_weight = 4.0

@@ -1,0 +1,47 @@
+name: Build StrategemSpiral
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Install Godot and import the game
+        run: bash .codex/setup.sh
+
+      - name: Export Linux and Windows builds
+        shell: bash
+        run: |
+          GODOT="$HOME/.cache/sd5913-godot-4.7.2/godot"
+          PROJECT_DIR="gameCode/slay-the-strat"
+          BUILD_DIR="$GITHUB_WORKSPACE/$PROJECT_DIR/build"
+
+          mkdir -p "$BUILD_DIR/linux" "$BUILD_DIR/windows"
+          touch "$BUILD_DIR/.gdignore"
+
+          "$GODOT" --headless --path "$PROJECT_DIR" \
+            --export-release "Linux" \
+            "$BUILD_DIR/linux/StrategemSpiral.x86_64"
+
+          "$GODOT" --headless --path "$PROJECT_DIR" \
+            --export-release "Windows" \
+            "$BUILD_DIR/windows/StrategemSpiral.exe"
+
+      - name: Upload builds
+        uses: actions/upload-artifact@v7
+        with:
+          name: strategem-spiral-builds
+          path: gameCode/slay-the-strat/build/
+          if-no-files-found: error

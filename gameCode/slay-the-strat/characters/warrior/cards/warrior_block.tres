@@ -1,9 +1,15 @@
-[gd_resource type="Resource" script_class="Card" format=3 uid="uid://bi0pxyw2tts66"]
+[gd_resource type="Resource" format=3 uid="uid://bi0pxyw2tts66"]
 
-[ext_resource type="Script" uid="uid://c2e2e2q6iflwi" path="res://custom_resources/card.gd" id="1_ti8q0"]
+[ext_resource type="Texture2D" uid="uid://4mmkiwvd3d1c" path="res://art/shieldCard.png" id="1_5nea4"]
+[ext_resource type="Script" uid="uid://dnroldbi4afsb" path="res://characters/warrior/cards/warrior_block.gd" id="2_5nea4"]
+[ext_resource type="AudioStream" uid="uid://df64e7qat73gs" path="res://art/block.ogg" id="3_1eir7"]
 
 [resource]
-script = ExtResource("1_ti8q0")
+script = ExtResource("2_5nea4")
 id = "warrior_block"
 type = 1
+cost = 1
+icon = ExtResource("1_5nea4")
+tooltip_text = "[center]Grants[color=\"0044ff\"] 5 [/color]shields[/center]"
+sound = ExtResource("3_1eir7")
 metadata/_custom_type_script = "uid://c2e2e2q6iflwi"
