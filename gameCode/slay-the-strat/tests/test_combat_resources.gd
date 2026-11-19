@@ -68,6 +68,22 @@ func test_card_is_playable_with_exact_cost_and_rejected_below_cost() -> void:
 	assert_true(character.can_play_card(ATTACK))
 
 
+func test_battles_have_independent_decks_and_discard_piles() -> void:
+	var template := CharacterStats.new()
+	template.starting_deck = CardPile.new()
+	template.starting_deck.add_card(ATTACK)
+	template.starting_deck.add_card(SWEEP)
+	var first := template.create_instance() as CharacterStats
+	var second := template.create_instance() as CharacterStats
+	first.discard.add_card(first.deck.draw_card())
+
+	assert_eq(first.deck.cards.size(), 1)
+	assert_same(first.discard.cards.front(), ATTACK)
+	assert_eq(second.deck.cards.size(), 2, "Another battle retains its full deck")
+	assert_eq(template.starting_deck.cards.size(), 2, "Drawing leaves the template intact")
+	assert_true(second.discard.empty())
+
+
 func test_pile_draws_in_order_and_emits_remaining_count() -> void:
 	var pile := CardPile.new()
 	pile.add_card(ATTACK)
