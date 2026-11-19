@@ -1,0 +1,38 @@
+[gd_scene format=3 uid="uid://8y4rqucgwkjv"]
+
+[ext_resource type="Script" uid="uid://dy2bljrymyp8t" path="res://scenes/enemy/enemy_action_picker.gd" id="1_0wgvc"]
+[ext_resource type="Script" uid="uid://b80dkjn4dpdar" path="res://enemies/golem/golem_attack_action.gd" id="2_4raxv"]
+[ext_resource type="Script" uid="uid://dwv36dd4u3wsp" path="res://enemies/golem/golem_block_action.gd" id="3_6yw3o"]
+[ext_resource type="Texture2D" uid="uid://bcre18p48doei" path="res://art/attackCard.png" id="4_attack"]
+[ext_resource type="Texture2D" uid="uid://4mmkiwvd3d1c" path="res://art/shieldCard.png" id="5_block"]
+[ext_resource type="Script" uid="uid://bsfb5mk7kp8l5" path="res://custom_resources/intent.gd" id="6_intent"]
+[ext_resource type="AudioStream" uid="uid://ty4ydima26yj" path="res://art/card_play.ogg" id="7_attack"]
+[ext_resource type="AudioStream" uid="uid://k8m4o3hlwm7l" path="res://art/enemy_block.ogg" id="8_block"]
+
+[sub_resource type="Resource" id="AttackIntent"]
+script = ExtResource("6_intent")
+number = "4"
+icon = ExtResource("4_attack")
+metadata/_custom_type_script = "uid://bsfb5mk7kp8l5"
+
+[sub_resource type="Resource" id="BlockIntent"]
+script = ExtResource("6_intent")
+icon = ExtResource("5_block")
+metadata/_custom_type_script = "uid://bsfb5mk7kp8l5"
+
+[node name="GolemEnemyAI" type="Node" unique_id=1796845153]
+script = ExtResource("1_0wgvc")
+
+[node name="GolemAttackAction" type="Node" parent="." unique_id=1176344874]
+script = ExtResource("2_4raxv")
+type = 1
+sound = ExtResource("7_attack")
+intent = SubResource("AttackIntent")
+chance_weight = 3.0
+
+[node name="GolemBlockAction" type="Node" parent="." unique_id=1149257494]
+script = ExtResource("3_6yw3o")
+type = 1
+sound = ExtResource("8_block")
+intent = SubResource("BlockIntent")
+chance_weight = 2.0
