@@ -32,6 +32,7 @@ func create_instance() -> Resource:
 	instance.block = 0
 	instance.reset_mana()
 	instance.deck = instance.starting_deck.duplicate()
+	instance.deck.cards = instance.starting_deck.cards.duplicate()
 	instance.draw_pile = CardPile.new()
 	instance.discard = CardPile.new()
 	return instance
