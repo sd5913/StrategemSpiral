@@ -1,0 +1,15 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://art/arrow.png" id="1"]
+
+[node name="ArrowSlot" type="Panel"]
+custom_minimum_size = Vector2(16, 16)
+mouse_filter = 2
+
+[node name="Arrow" type="Sprite2D" parent="."]
+position = Vector2(8, 7)
+scale = Vector2(0.75, 0.75)
+texture = ExtResource("1")
+
+[node name="Stem" type="Polygon2D" parent="Arrow"]
+polygon = PackedVector2Array(-2, 3, 2, 3, 2, 7, -2, 7)

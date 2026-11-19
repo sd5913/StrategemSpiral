@@ -1,12 +1,26 @@
 extends GutTest
 
 
+func test_startup_opens_a_menu_with_play_focused() -> void:
+	var path: String = ProjectSettings.get_setting("application/run/main_scene")
+	var scene := load(path) as PackedScene
+	var menu := add_child_autofree(scene.instantiate()) as Node
+	await wait_process_frames(2)
+	var play := menu.get_node_or_null("%PlayButton") as Button
+	var quit := menu.get_node_or_null("%QuitButton") as Button
+
+	assert_not_null(play, "The startup scene has a Play button")
+	assert_not_null(quit, "The startup scene has a Quit button")
+	if play != null:
+		assert_true(play.has_focus(), "The keyboard can start the battle from the menu")
+
+
 func test_linux_export_starts_and_exits_without_script_errors() -> void:
 	if OS.get_environment("STRATEGEM_LINUX_EXPORT").is_empty():
 		pending("Set STRATEGEM_LINUX_EXPORT to the absolute Linux export path")
 		return
 
-	var output := _run_linux_export()
+	var output := _run_game(OS.get_environment("STRATEGEM_LINUX_EXPORT"))
 	var entry_path: String = ProjectSettings.get_setting("application/run/main_scene")
 	if entry_path.begins_with("uid://"):
 		entry_path = ResourceUID.get_id_path(ResourceUID.text_to_id(entry_path))
@@ -15,12 +29,12 @@ func test_linux_export_starts_and_exits_without_script_errors() -> void:
 	assert_false(output.contains("Error: Couldn't load project data"), "Embedded game data loads")
 
 
-func test_linux_export_releases_game_music_on_exit() -> void:
-	if OS.get_environment("STRATEGEM_LINUX_EXPORT").is_empty():
-		pending("Set STRATEGEM_LINUX_EXPORT to the absolute Linux export path")
-		return
-
-	var output := _run_linux_export()
+func test_battle_releases_game_music_on_exit() -> void:
+	# The release executable opens the menu and disallows scene overrides.
+	var output := _run_game(OS.get_executable_path(), [
+		"--path", ProjectSettings.globalize_path("res://"),
+		"--scene", "res://scenes/battle/battle.tscn"])
+	assert_string_contains(output, "Completed load for: 'res://art/game_music_version1.ogg'")
 	var failures: Array[String] = []
 	for line in output.split("\n"):
 		if ("ObjectDB instances" in line and "leaked at exit" in line
@@ -61,11 +75,11 @@ func test_published_linux_download_exists_as_release_asset() -> void:
 		assert_has(asset_names, name, "%s names %s as a Linux download" % [metadata.tagName, name])
 
 
-func _run_linux_export() -> String:
-	var executable := OS.get_environment("STRATEGEM_LINUX_EXPORT")
+func _run_game(executable: String, extra_args := PackedStringArray()) -> String:
 	var output: Array = []
-	var status := OS.execute("timeout", ["15s", executable, "--headless", "--verbose",
-		"--quit-after", "10"], output, true)
+	var args := PackedStringArray(["15s", executable, "--headless", "--verbose", "--quit-after", "10"])
+	args.append_array(extra_args)
+	var status := OS.execute("timeout", args, output, true)
 	var log_text := "".join(output)
-	assert_eq(status, 0, "The Linux export exits successfully:\n" + log_text)
+	assert_eq(status, 0, "The game exits successfully:\n" + log_text)
 	return log_text

@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://deq43mwt5jyi2" path="res://scenes/cardUI/card_ui.gd" id="1_ealcj"]
 [ext_resource type="Theme" uid="uid://bp6mbsxro77ws" path="res://main_theme.tres" id="1_r5tp5"]
-[ext_resource type="StyleBox" uid="uid://dyry7x5g6s2uq" path="res://scenes/cardUI/card_base_stylebox.tres" id="2_mesd7"]
+[ext_resource type="StyleBox" path="res://scenes/cardUI/card_face_stylebox.tres" id="2_mesd7"]
 [ext_resource type="Script" uid="uid://c5cglofwcnip0" path="res://scenes/cardUI/card_state_machine.gd" id="3_2wb3e"]
 [ext_resource type="Texture2D" uid="uid://bq4im540nk025" path="res://art/tile_0106.png" id="3_qy8f5"]
 [ext_resource type="Script" uid="uid://cshp618e2xk7p" path="res://scenes/cardUI/cardStates/card_base_state.gd" id="4_euy1w"]

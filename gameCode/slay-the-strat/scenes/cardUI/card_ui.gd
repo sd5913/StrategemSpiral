@@ -3,9 +3,10 @@ extends Control
 
 signal reparent_requested(which_card_ui: CardUI)
 
-const BASE_STYLEBOX := preload("uid://dyry7x5g6s2uq")
-const HOVER_STYLEBOX := preload("uid://btv25wnqy0uoq")
+const BASE_STYLEBOX := preload("res://scenes/cardUI/card_face_stylebox.tres")
+const HOVER_STYLEBOX := preload("res://scenes/cardUI/card_face_hover_stylebox.tres")
 const DRAGGING_STYLEBOX := preload("uid://ca54yd7w2gcv0")
+const ENEMY_COLLISION_MASK := 1 << 2
 
 @export var card: Card : set = _set_card
 @export var char_stats: CharacterStats : set = _set_char_stats
@@ -37,12 +38,37 @@ func animate_to_position(new_position: Vector2, duration: float) -> void:
 	tween = create_tween().set_trans(Tween.TRANS_CIRC).set_ease(Tween.EASE_OUT)
 	tween.tween_property(self, "global_position", new_position, duration)
 	
-func play() -> void:
+func play(effect_bonus := 0) -> void:
 	if not card:
 		return
 	
-	card.play(targets, char_stats)
+	card.play(targets, char_stats, effect_bonus)
 	queue_free()
+
+func resolve_drop_at(viewport_position: Vector2) -> void:
+	targets.clear()
+	if not playable:
+		return
+
+	# Physics overlap signals can lag the release event by a frame.
+	var query := PhysicsPointQueryParameters2D.new()
+	query.position = get_viewport().get_canvas_transform().affine_inverse() * viewport_position
+	query.collide_with_areas = true
+	query.collide_with_bodies = false
+	var single_target := card.is_single_targeted()
+	query.collision_mask = ENEMY_COLLISION_MASK if single_target else drop_point_detector.collision_mask
+	var closest: Node2D
+	var distance := INF
+	for hit in get_world_2d().direct_space_state.intersect_point(query):
+		var candidate := hit.collider as Node2D
+		if single_target and (not candidate is Enemy or candidate.stats.health <= 0):
+			continue
+		var candidate_distance := candidate.global_position.distance_squared_to(query.position)
+		if candidate_distance < distance:
+			closest = candidate
+			distance = candidate_distance
+	if closest != null:
+		targets.append(closest)
 	
 func _on_gui_input(event: InputEvent) -> void:
 	card_state_machine.on_gui_input(event)
