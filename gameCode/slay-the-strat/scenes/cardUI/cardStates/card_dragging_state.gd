@@ -10,7 +10,7 @@ func enter() -> void:
 	if ui_layer:
 		card_ui.reparent(ui_layer)
 		
-	card_ui.panel.set("theme_override_styles/panel", card_ui.DRAGGING_STYLEBOX)
+	card_ui.panel.set("theme_override_styles/panel", card_ui.get_dragging_stylebox())
 	Events.card_drag_started.emit(card_ui)
 	
 	minimum_drag_time_elapsed = false

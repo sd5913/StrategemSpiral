@@ -1,0 +1,14 @@
+[gd_resource type="Resource" format=3 uid="uid://dxysalgecnrsy"]
+
+[ext_resource type="Texture2D" uid="uid://bcre18p48doei" path="res://art/attackCard.png" id="1_icon"]
+[ext_resource type="Script" uid="uid://br88yapdppj8y" path="res://characters/warrior/cards/warrior_adda_swap_health.gd" id="2_script"]
+[ext_resource type="AudioStream" uid="uid://pw6ixwdlrmgr" path="res://art/card_hit.ogg" id="3_sound"]
+
+[resource]
+script = ExtResource("2_script")
+id = "adda_swap_health"
+type = 2
+is_ultimate = true
+icon = ExtResource("1_icon")
+tooltip_text = "[center][color=#c9b6ff][b]ADDA[/b][/color] [color=#8de0ff]A D D A[/color][br][b]Win:[/b] Swap HP; fail: heal enemies.[/center]"
+sound = ExtResource("3_sound")

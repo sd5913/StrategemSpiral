@@ -19,6 +19,7 @@
 [ext_resource type="Theme" uid="uid://bp6mbsxro77ws" path="res://main_theme.tres" id="13_icoan"]
 [ext_resource type="Script" uid="uid://jmnxcqupqhs6" path="res://scenes/ui/red_flash.gd" id="15_t1kk3"]
 [ext_resource type="PackedScene" uid="uid://bmab41vwr3vp8" path="res://scenes/ui/battle_over_panel.tscn" id="17_6ofp8"]
+[ext_resource type="PackedScene" path="res://scenes/ui/ultimate_card_qte.tscn" id="18_qte"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_07wxo"]
 size = Vector2(256, 100)
@@ -90,7 +91,7 @@ char_stats = ExtResource("4_oiw7q")
 
 [node name="Tooltip" parent="BattleUI" unique_id=1737065028 instance=ExtResource("12_mxe8n")]
 offset_top = 5.0
-offset_bottom = 41.0
+offset_bottom = 59.0
 
 [node name="EndTurnButton" type="Button" parent="BattleUI" unique_id=319835804]
 unique_name_in_owner = true
@@ -126,7 +127,9 @@ wait_time = 0.15
 one_shot = true
 
 [node name="BattleOverLayer" type="CanvasLayer" parent="." unique_id=586726096]
-layer = 2
+layer = 128
 
 [node name="BattleOverPanel" parent="BattleOverLayer" unique_id=29943377 instance=ExtResource("17_6ofp8")]
 visible = false
+
+[node name="UltimateCardQTE" parent="." unique_id=476675993 instance=ExtResource("18_qte")]

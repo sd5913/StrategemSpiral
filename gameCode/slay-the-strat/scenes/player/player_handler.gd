@@ -20,6 +20,10 @@ func start_battle(char_stats: CharacterStats) -> void:
 func start_turn() -> void:
 	character.block = 0
 	character.reset_mana()
+	if character.blood_ritual_loss_per_turn > 0:
+		character.health -= character.blood_ritual_loss_per_turn
+		if character.health <= 0:
+			Events.player_died.emit()
 	draw_cards(character.cards_per_turn)
 	
 func end_turn() -> void:

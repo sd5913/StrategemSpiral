@@ -9,6 +9,8 @@ var mana: int : set = set_mana
 var deck: CardPile
 var discard: CardPile
 var draw_pile: CardPile
+var damage_multiplier := 1
+var blood_ritual_loss_per_turn := 0
 
 func set_mana(value: int) -> void:
 	mana = value
@@ -31,6 +33,8 @@ func create_instance() -> Resource:
 	instance.health = max_health
 	instance.block = 0
 	instance.reset_mana()
+	instance.damage_multiplier = 1
+	instance.blood_ritual_loss_per_turn = 0
 	instance.deck = instance.starting_deck.duplicate()
 	instance.draw_pile = CardPile.new()
 	instance.discard = CardPile.new()

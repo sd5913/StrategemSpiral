@@ -1,7 +1,7 @@
 class_name BattleOverPanel
 extends Panel
 
-enum Type {WIN, LOSE}
+enum Type {WIN, LOSE, OBLITERATED}
 
 @onready var label: Label = %Label
 @onready var continue_button = %ContinueButton
@@ -12,8 +12,11 @@ func _ready() -> void:
 	restart_button.pressed.connect(get_tree().reload_current_scene)
 	Events.battle_over_screen_requested.connect(show_screen)
 	
-func show_screen(text: String, _type: Type) -> void:
+func show_screen(text: String, type: Type) -> void:
 	label.text = text
+	label.remove_theme_color_override("font_color")
+	if type == Type.OBLITERATED:
+		label.add_theme_color_override("font_color", Color(1.0, 0.48, 0.3))
 	continue_button.visible = true
 	restart_button.visible = true
 	show()

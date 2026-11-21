@@ -1,0 +1,14 @@
+[gd_resource type="Resource" format=3 uid="uid://l245836rqiua"]
+
+[ext_resource type="Texture2D" uid="uid://4mmkiwvd3d1c" path="res://art/shieldCard.png" id="1_icon"]
+[ext_resource type="Script" uid="uid://yy2rmhugw8ni" path="res://characters/warrior/cards/warrior_last_gasp.gd" id="2_script"]
+[ext_resource type="AudioStream" uid="uid://pw6ixwdlrmgr" path="res://art/card_hit.ogg" id="3_sound"]
+
+[resource]
+script = ExtResource("2_script")
+id = "last_gasp"
+type = 2
+is_ultimate = true
+icon = ExtResource("1_icon")
+tooltip_text = "[center][color=#c9b6ff][b]Last Gasp[/b][/color] [color=#8de0ff]D S D S D S[/color][br][b]Win:[/b] 5 HP; triple damage. Fail: 5 HP.[/center]"
+sound = ExtResource("3_sound")

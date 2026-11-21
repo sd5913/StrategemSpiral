@@ -8,6 +8,24 @@ const WHITE_SPRITE_MATERIAL := preload("res://art/white_sprite_material.tres")
 @onready var sprite_2d: Sprite2D = $Sprite2D
 @onready var stats_ui: StatsUI = $StatsUI as StatsUI
 
+var shiver_tween: Tween
+var shiver_origin := Vector2.ZERO
+
+func _ready() -> void:
+	shiver_origin = position
+	Events.battle_over_screen_requested.connect(stop_shiver)
+
+func start_shiver() -> void:
+	stop_shiver()
+	shiver_origin = position
+	shiver_tween = Shaker.shake_loop(self, 3.0)
+
+func stop_shiver(_text := "", _type = null) -> void:
+	if shiver_tween and shiver_tween.is_running():
+		shiver_tween.kill()
+		position = shiver_origin
+	shiver_tween = null
+
 func set_character_stats(value: CharacterStats) -> void:
 	stats = value
 	

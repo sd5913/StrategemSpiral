@@ -17,3 +17,22 @@ func shake(thing: Node2D, strength: float, duration: float = 0.2) -> void:
 		strength *= 0.75
 		
 	tween.finished.connect(func(): thing.position = orig_pos)
+
+func shake_loop(thing: Node2D, strength: float) -> Tween:
+	if not thing:
+		return null
+	var orig_pos := thing.position
+	var tween := create_tween().set_loops()
+	tween.tween_callback(func():
+		if not is_instance_valid(thing):
+			return
+		var offset := Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0))
+		thing.position = orig_pos + strength * offset
+	)
+	tween.tween_interval(0.05)
+	tween.tween_callback(func():
+		if is_instance_valid(thing):
+			thing.position = orig_pos
+	)
+	tween.tween_interval(0.05)
+	return tween

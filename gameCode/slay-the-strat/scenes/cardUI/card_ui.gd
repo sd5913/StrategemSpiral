@@ -6,6 +6,9 @@ signal reparent_requested(which_card_ui: CardUI)
 const BASE_STYLEBOX := preload("uid://dyry7x5g6s2uq")
 const HOVER_STYLEBOX := preload("uid://btv25wnqy0uoq")
 const DRAGGING_STYLEBOX := preload("uid://ca54yd7w2gcv0")
+const ULTIMATE_BASE_STYLEBOX := preload("res://scenes/cardUI/ultimate_card_base_stylebox.tres")
+const ULTIMATE_HOVER_STYLEBOX := preload("res://scenes/cardUI/ultimate_card_hover_stylebox.tres")
+const ULTIMATE_DRAGGING_STYLEBOX := preload("res://scenes/cardUI/ultimate_card_dragging_stylebox.tres")
 
 @export var card: Card : set = _set_card
 @export var char_stats: CharacterStats : set = _set_char_stats
@@ -22,6 +25,15 @@ var parent: Control
 var tween: Tween
 var playable := true : set = _set_playable
 var disabled := false
+
+func get_base_stylebox() -> StyleBox:
+	return ULTIMATE_BASE_STYLEBOX if card and card.is_ultimate else BASE_STYLEBOX
+
+func get_hover_stylebox() -> StyleBox:
+	return ULTIMATE_HOVER_STYLEBOX if card and card.is_ultimate else HOVER_STYLEBOX
+
+func get_dragging_stylebox() -> StyleBox:
+	return ULTIMATE_DRAGGING_STYLEBOX if card and card.is_ultimate else DRAGGING_STYLEBOX
 
 func _ready() -> void:
 	Events.card_aim_started.connect(_on_card_drag_or_aiming_started)
@@ -60,15 +72,23 @@ func _set_card(value: Card) -> void:
 	card = value
 	cost.text = str(card.cost)
 	icon.texture = card.icon
+	panel.set("theme_override_styles/panel", get_base_stylebox())
+	if card.is_ultimate:
+		cost.add_theme_color_override("font_color", Color(0.78, 0.68, 1.0))
+		icon.modulate = Color(0.82, 0.78, 1.0)
+	else:
+		cost.remove_theme_color_override("font_color")
+		icon.modulate = Color.WHITE
 	
 func _set_playable(value: bool) -> void:
 	playable = value
+	var icon_tint := Color(0.82, 0.78, 1.0) if card and card.is_ultimate else Color.WHITE
 	if not playable:
 		cost.add_theme_color_override("font_color", Color.RED)
-		icon.modulate = Color(1, 1, 1, 0.5)
+		icon.modulate = Color(icon_tint.r, icon_tint.g, icon_tint.b, 0.5)
 	else:
 		cost.remove_theme_color_override("font_color")
-		icon.modulate = Color(1, 1, 1, 1)
+		icon.modulate = icon_tint
 		
 func _set_char_stats(value: CharacterStats) -> void:
 	char_stats = value
@@ -88,7 +108,7 @@ func _on_card_drag_or_aiming_started(used_card: CardUI) -> void:
 		return
 	disabled = true
 	
-func _on_card_drag_or_aiming_ended(_card: CardUI) -> void:
+func _on_card_drag_or_aiming_ended(_used_card: CardUI) -> void:
 	disabled = false
 	self.playable = char_stats.can_play_card(card)
 	

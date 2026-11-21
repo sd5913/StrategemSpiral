@@ -6,8 +6,12 @@
 [ext_resource type="Resource" uid="uid://c71870dkofeko" path="res://characters/warrior/cards/warrior_mana_surge.tres" id="3_7axcj"]
 [ext_resource type="Resource" uid="uid://bs7n551vqqat3" path="res://characters/warrior/cards/warrior_sweep_attack.tres" id="3_mt3oe"]
 [ext_resource type="Resource" uid="uid://bi0pxyw2tts66" path="res://characters/warrior/cards/warrior_block.tres" id="3_ne0bc"]
+[ext_resource type="Resource" path="res://characters/warrior/cards/warrior_adda_swap_health.tres" id="5_adda"]
+[ext_resource type="Resource" path="res://characters/warrior/cards/warrior_blood_ritual.tres" id="6_blood"]
+[ext_resource type="Resource" path="res://characters/warrior/cards/warrior_nuke.tres" id="7_nuke"]
+[ext_resource type="Resource" path="res://characters/warrior/cards/warrior_last_gasp.tres" id="8_gasp"]
 
 [resource]
 script = ExtResource("2_2wma6")
-cards = Array[ExtResource("1_8w230")]([ExtResource("2_gobyu"), ExtResource("2_gobyu"), ExtResource("2_gobyu"), ExtResource("3_7axcj"), ExtResource("3_mt3oe"), ExtResource("3_ne0bc"), ExtResource("3_7axcj"), ExtResource("3_ne0bc"), ExtResource("3_mt3oe"), ExtResource("3_mt3oe")])
+cards = Array[ExtResource("1_8w230")]([ExtResource("2_gobyu"), ExtResource("2_gobyu"), ExtResource("2_gobyu"), ExtResource("3_7axcj"), ExtResource("3_mt3oe"), ExtResource("3_ne0bc"), ExtResource("3_7axcj"), ExtResource("3_ne0bc"), ExtResource("3_mt3oe"), ExtResource("3_mt3oe"), ExtResource("5_adda"), ExtResource("6_blood"), ExtResource("7_nuke"), ExtResource("8_gasp")])
 metadata/_custom_type_script = "uid://ecyy64bjmqwx"

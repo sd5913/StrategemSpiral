@@ -1,0 +1,14 @@
+[gd_resource type="Resource" format=3 uid="uid://c6oyysitfky0x"]
+
+[ext_resource type="Texture2D" uid="uid://bcre18p48doei" path="res://art/attackCard.png" id="1_icon"]
+[ext_resource type="Script" uid="uid://bmfvknw8nloo" path="res://characters/warrior/cards/warrior_nuke.gd" id="2_script"]
+[ext_resource type="AudioStream" uid="uid://pw6ixwdlrmgr" path="res://art/card_hit.ogg" id="3_sound"]
+
+[resource]
+script = ExtResource("2_script")
+id = "nuke_30_kill_streak"
+type = 2
+is_ultimate = true
+icon = ExtResource("1_icon")
+tooltip_text = "[center][color=#c9b6ff][b]30-Kill[/b][/color] [color=#8de0ff]S W A S W D S W[/color][br][b]Win:[/b] Clear block; 30 to all incl. you. Fail: death.[/center]"
+sound = ExtResource("3_sound")
