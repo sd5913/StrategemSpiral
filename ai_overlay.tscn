@@ -1,0 +1,60 @@
+[gd_scene format=3 uid="uid://c6aiplaytestoverlay01"]
+
+[ext_resource type="Script" path="res://ai_tester/ai_overlay.gd" id="1_ovl"]
+[ext_resource type="Script" path="res://ai_tester/ai_controller.gd" id="2_ctrl"]
+[ext_resource type="Theme" uid="uid://bp6mbsxro77ws" path="res://main_theme.tres" id="3_theme"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hud"]
+bg_color = Color(0.08, 0.08, 0.12, 0.85)
+border_width_bottom = 1
+border_color = Color(0.3, 0.3, 0.45, 0.8)
+
+[node name="AIOverlay" type="CanvasLayer"]
+layer = 100
+script = ExtResource("1_ovl")
+
+[node name="AIController" type="Node" parent="."]
+script = ExtResource("2_ctrl")
+
+[node name="HUD" type="PanelContainer" parent="."]
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 15.0
+grow_horizontal = 2
+theme = ExtResource("3_theme")
+theme_override_styles/panel = SubResource("StyleBoxFlat_hud")
+
+[node name="HBox" type="HBoxContainer" parent="HUD"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="ToggleBtn" type="Button" parent="HUD/HBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(40, 13)
+layout_mode = 2
+text = "🤖 AI: ON"
+
+[node name="StratBtn" type="Button" parent="HUD/HBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(36, 13)
+layout_mode = 2
+text = "⚖️ Bal"
+
+[node name="SpeedBtn" type="Button" parent="HUD/HBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(30, 13)
+layout_mode = 2
+text = "⚡ 1x"
+
+[node name="ScoreLabel" type="Label" parent="HUD/HBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "W:0 L:0"
+
+[node name="StatusLabel" type="Label" parent="HUD/HBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Press F1:Toggle F2:Strat F3:Speed"
+text_overrun_behavior = 3
+clip_text = true

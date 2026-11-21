@@ -1,0 +1,85 @@
+{
+  "assertion_details": [],
+  "assertion_failures_count": 0,
+  "avg_win_hp": 15.2222222222222,
+  "avg_win_turns": 9.33333333333333,
+  "duration_seconds": 25.449,
+  "game_history": [
+    {
+      "game_index": 1,
+      "player_hp": 6,
+      "result": "WIN",
+      "strategy": "Balanced (Heuristic)",
+      "turns": 12
+    },
+    {
+      "game_index": 2,
+      "player_hp": 15,
+      "result": "WIN",
+      "strategy": "Balanced (Heuristic)",
+      "turns": 9
+    },
+    {
+      "game_index": 3,
+      "player_hp": 16,
+      "result": "WIN",
+      "strategy": "Balanced (Heuristic)",
+      "turns": 10
+    },
+    {
+      "game_index": 4,
+      "player_hp": 22,
+      "result": "WIN",
+      "strategy": "Balanced (Heuristic)",
+      "turns": 9
+    },
+    {
+      "game_index": 5,
+      "player_hp": 31,
+      "result": "WIN",
+      "strategy": "Balanced (Heuristic)",
+      "turns": 9
+    },
+    {
+      "game_index": 6,
+      "player_hp": 0,
+      "result": "LOSE",
+      "strategy": "Balanced (Heuristic)",
+      "turns": 7
+    },
+    {
+      "game_index": 7,
+      "player_hp": 4,
+      "result": "WIN",
+      "strategy": "Balanced (Heuristic)",
+      "turns": 11
+    },
+    {
+      "game_index": 8,
+      "player_hp": 15,
+      "result": "WIN",
+      "strategy": "Balanced (Heuristic)",
+      "turns": 8
+    },
+    {
+      "game_index": 9,
+      "player_hp": 19,
+      "result": "WIN",
+      "strategy": "Balanced (Heuristic)",
+      "turns": 7
+    },
+    {
+      "game_index": 10,
+      "player_hp": 9,
+      "result": "WIN",
+      "strategy": "Balanced (Heuristic)",
+      "turns": 9
+    }
+  ],
+  "losses": 1,
+  "strategy": "Balanced (Heuristic)",
+  "timestamp": "2026-11-21T17:27:36",
+  "total_games": 10,
+  "win_rate_percent": 90.0,
+  "wins": 9
+}
