@@ -21,4 +21,6 @@ signal enemy_turn_ended
 
 #system
 signal battle_over_screen_requested(text: String, type: BattleOverPanel.Type)
+signal battle_over_resolution_started
+signal battle_over_resolution_finished
 signal ultimate_card_qte_started(sequence: Array[String], success: Callable, failure: Callable)

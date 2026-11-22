@@ -13,6 +13,8 @@ func apply_effects(targets: Array[Node]) -> void:
 	)
 
 func _apply_success(player: Player) -> void:
+	SfxPlayer.play_while_paused(sound)
+	Events.battle_over_resolution_started.emit()
 	player.stats.block = 0
 	player.stats.take_damage(30)
 	var enemies := player.get_tree().get_nodes_in_group("enemies")
@@ -30,24 +32,12 @@ func _apply_success(player: Player) -> void:
 
 	var whiteout: CanvasLayer = await _play_nuclear_cutscene(player)
 	var player_defeated := player.stats.health <= 0
-	var ending_text := ""
-	var ending_type: BattleOverPanel.Type = BattleOverPanel.Type.WIN
-	if player_defeated and not enemies_alive:
-		ending_text = "OBLITERATED"
-		ending_type = BattleOverPanel.Type.OBLITERATED
-	elif player_defeated:
-		ending_text = "Dang."
-		ending_type = BattleOverPanel.Type.LOSE
-	elif not enemies_alive:
-		ending_text = "Gottem! :D"
-
-	if not ending_text.is_empty():
-		Events.battle_over_screen_requested.emit(ending_text, ending_type)
 	for enemy in defeated_enemies:
 		if is_instance_valid(enemy):
 			enemy.queue_free()
-	if ending_text.is_empty():
+	if not player_defeated and enemies_alive:
 		await _fade_whiteout(whiteout, player)
+	Events.battle_over_resolution_finished.emit()
 
 func _apply_failure(player: Player) -> void:
 	player.stats.block = 0

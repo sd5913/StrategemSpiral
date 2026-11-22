@@ -19,6 +19,9 @@ enum Target{SELF, SINGLE_ENEMY, ALL_ENEMIES, EVERYONE}
 func is_single_targeted() -> bool:
 	return target == Target.SINGLE_ENEMY
 
+func play_card_sound() -> void:
+	SfxPlayer.play(sound)
+
 func _get_targets(targets: Array[Node]) -> Array[Node]:
 	if not targets:
 		return[]

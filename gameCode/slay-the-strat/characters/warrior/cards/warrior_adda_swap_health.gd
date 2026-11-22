@@ -7,12 +7,13 @@ func apply_effects(targets: Array[Node]) -> void:
 	if not player:
 		return
 	Events.ultimate_card_qte_started.emit(
-		["left", "right", "right", "left"] as Array[String],
+		["left", "right", "right", "left", "right", "right"] as Array[String],
 		_apply_success.bind(player),
 		_apply_failure.bind(player)
 	)
 
 func _apply_success(player: Player) -> void:
+	play_card_sound()
 	var enemies := player.get_tree().get_nodes_in_group("enemies")
 	var enemy_health_sum := 0
 	for enemy_node in enemies:

@@ -28,3 +28,7 @@ bus = &"SFX"
 
 [node name="AudioStreamPlayer8" type="AudioStreamPlayer" parent="." unique_id=476449471]
 bus = &"SFX"
+
+[node name="PauseSafeAudioStreamPlayer" type="AudioStreamPlayer" parent="."]
+process_mode = 3
+bus = &"SFX"

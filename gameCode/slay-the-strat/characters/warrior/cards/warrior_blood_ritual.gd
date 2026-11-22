@@ -13,6 +13,7 @@ func apply_effects(targets: Array[Node]) -> void:
 	)
 
 func _apply_success(player: Player) -> void:
+	play_card_sound()
 	player.stats.health *= 2
 	player.stats.blood_ritual_loss_per_turn = 2
 	var pulse_tween := player.create_tween().set_loops()

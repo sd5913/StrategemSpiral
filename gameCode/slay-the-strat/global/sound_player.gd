@@ -13,6 +13,13 @@ func play(audio: AudioStream, single=false) -> void:
 			player.stream = audio
 			player.play()
 			break
+
+func play_while_paused(audio: AudioStream) -> void:
+	if not audio:
+		return
+	var player := $PauseSafeAudioStreamPlayer as AudioStreamPlayer
+	player.stream = audio
+	player.play()
 			
 func stop() -> void:
 	for player in get_children():

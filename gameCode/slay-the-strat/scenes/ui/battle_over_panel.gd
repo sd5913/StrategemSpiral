@@ -13,6 +13,9 @@ func _ready() -> void:
 	Events.battle_over_screen_requested.connect(show_screen)
 	
 func show_screen(text: String, type: Type) -> void:
+	if _is_obliteration():
+		text = "OBLITERATED"
+		type = Type.OBLITERATED
 	label.text = text
 	label.remove_theme_color_override("font_color")
 	if type == Type.OBLITERATED:
@@ -21,3 +24,20 @@ func show_screen(text: String, type: Type) -> void:
 	restart_button.visible = true
 	show()
 	get_tree().paused = true
+
+func _is_obliteration() -> bool:
+	var player_alive := false
+	for player_node in get_tree().get_nodes_in_group("player"):
+		var player := player_node as Player
+		if player and player.stats.health > 0:
+			player_alive = true
+			break
+
+	var enemies_alive := false
+	for enemy_node in get_tree().get_nodes_in_group("enemies"):
+		var enemy := enemy_node as Enemy
+		if enemy and enemy.stats.health > 0:
+			enemies_alive = true
+			break
+
+	return not player_alive and not enemies_alive

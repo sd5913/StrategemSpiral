@@ -8,6 +8,7 @@ extends Node2D
 @onready var player: Player = $Player as Player
 @onready var enemy_handler: EnemyHandler = $EnemyHandler as EnemyHandler
 var battle_over_requested := false
+var battle_over_resolution_in_progress := false
 
 
 func _ready() -> void:
@@ -21,6 +22,8 @@ func _ready() -> void:
 	Events.player_turn_ended.connect(player_handler.end_turn)
 	Events.player_hand_discarded.connect(enemy_handler.start_turn)
 	Events.player_died.connect(_on_player_died)
+	Events.battle_over_resolution_started.connect(_on_battle_over_resolution_started)
+	Events.battle_over_resolution_finished.connect(_on_battle_over_resolution_finished)
 	Events.battle_over_screen_requested.connect(_on_battle_over_requested)
 	
 	start_battle(new_stats)
@@ -32,19 +35,50 @@ func start_battle(stats: CharacterStats) -> void:
 	player_handler.start_battle(stats)
 	
 func _on_enemies_child_order_changed() -> void:
-	if battle_over_requested:
-		return
-	if enemy_handler.get_child_count() == 0:
-		Events.battle_over_screen_requested.emit("Gottem! :D", BattleOverPanel.Type.WIN)
+	_check_battle_result()
 	
 func _on_enemy_turn_ended() -> void:
 	player_handler.start_turn()
 	enemy_handler.reset_enemy_actions()
 	
 func _on_player_died() -> void:
-	if battle_over_requested:
+	_check_battle_result()
+
+func _check_battle_result() -> void:
+	if not is_inside_tree() or battle_over_requested or battle_over_resolution_in_progress:
 		return
-	Events.battle_over_screen_requested.emit("Dang.", BattleOverPanel.Type.LOSE)
+
+	var scene_tree := get_tree()
+	if not scene_tree:
+		return
+
+	var player_alive := false
+	for player_node in scene_tree.get_nodes_in_group("player"):
+		var battle_player := player_node as Player
+		if battle_player and battle_player.stats.health > 0:
+			player_alive = true
+			break
+
+	var enemies_alive := false
+	for enemy_node in scene_tree.get_nodes_in_group("enemies"):
+		var enemy := enemy_node as Enemy
+		if enemy and enemy.stats.health > 0:
+			enemies_alive = true
+			break
+
+	if not player_alive and not enemies_alive:
+		Events.battle_over_screen_requested.emit("OBLITERATED", BattleOverPanel.Type.OBLITERATED)
+	elif not player_alive:
+		Events.battle_over_screen_requested.emit("Dang.", BattleOverPanel.Type.LOSE)
+	elif not enemies_alive:
+		Events.battle_over_screen_requested.emit("Gottem! :D", BattleOverPanel.Type.WIN)
+
+func _on_battle_over_resolution_started() -> void:
+	battle_over_resolution_in_progress = true
+
+func _on_battle_over_resolution_finished() -> void:
+	battle_over_resolution_in_progress = false
+	_check_battle_result()
 
 func _on_battle_over_requested(_text: String, _type: BattleOverPanel.Type) -> void:
 	battle_over_requested = true

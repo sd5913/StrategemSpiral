@@ -1,6 +1,6 @@
 extends CanvasLayer
 
-const DURATION := 3.0
+const DURATION := 2.0
 
 @onready var panel: Panel = $Panel
 @onready var keys: HBoxContainer = %Keys

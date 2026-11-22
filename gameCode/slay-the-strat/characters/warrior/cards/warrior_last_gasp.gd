@@ -13,6 +13,7 @@ func apply_effects(targets: Array[Node]) -> void:
 	)
 
 func _apply_success(player: Player) -> void:
+	play_card_sound()
 	var damage := maxi(player.stats.health - 5, 0)
 	player.stats.block = 0
 	if damage > 0:
