@@ -44,7 +44,30 @@ func _draw_card() -> void:
 	reshuffle_deck_from_discard()
 	if character.draw_pile.empty():
 		return
-	hand.add_card(character.draw_pile.draw_card())
+
+	var has_ultimate_in_hand := _hand_has_ultimate()
+	var deferred_ultimates: Array[Card] = []
+	var drawn_card: Card
+	while not character.draw_pile.empty():
+		var card := character.draw_pile.draw_card()
+		if card.is_ultimate and has_ultimate_in_hand:
+			deferred_ultimates.append(card)
+		else:
+			drawn_card = card
+			break
+
+	for card in deferred_ultimates:
+		character.draw_pile.add_card(card)
+
+	if drawn_card:
+		hand.add_card(drawn_card)
+
+func _hand_has_ultimate() -> bool:
+	for child in hand.get_children():
+		var card_ui := child as CardUI
+		if card_ui and card_ui.card and card_ui.card.is_ultimate:
+			return true
+	return false
 
 func discard_cards() -> void:
 	if hand.get_child_count() == 0:
