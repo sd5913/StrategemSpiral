@@ -14,7 +14,7 @@
 [ext_resource type="Resource" uid="uid://c3bvtohawgit3" path="res://enemies/gob/gob_enemy.tres" id="8_mvulk"]
 [ext_resource type="Script" uid="uid://d3plsvl8k8i2i" path="res://scenes/player/player_handler.gd" id="8_mxe8n"]
 [ext_resource type="Resource" uid="uid://b36nwrw363ix2" path="res://enemies/golem/golem_enemy.tres" id="9_w40i5"]
-[ext_resource type="Resource" path="res://enemies/wolf/wolf_enemy.tres" id="10_wolf"]
+[ext_resource type="Resource" uid="uid://6gdgialpw5s8" path="res://enemies/wolf/wolf_enemy.tres" id="10_wolf"]
 [ext_resource type="PackedScene" uid="uid://b8jddn86dqd4h" path="res://scenes/ui/mana_ui.tscn" id="11_fisqk"]
 [ext_resource type="PackedScene" uid="uid://5ly43afer2n3" path="res://scenes/ui/tooltip.tscn" id="12_mxe8n"]
 [ext_resource type="Theme" uid="uid://bp6mbsxro77ws" path="res://main_theme.tres" id="13_icoan"]
