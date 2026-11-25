@@ -8,6 +8,7 @@
 script = ExtResource("2_script")
 id = "last_gasp"
 type = 2
+cost = 0
 is_ultimate = true
 icon = ExtResource("1_icon")
 tooltip_text = "[center][color=#c9b6ff][b]Last Gasp[/b][/color] [color=#8de0ff]D S D S D S[/color][br][b]Win:[/b] 5 HP; triple damage. Fail: 5 HP.[/center]"

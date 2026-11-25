@@ -14,7 +14,9 @@ func apply_effects(targets: Array[Node]) -> void:
 
 func _apply_success(player: Player) -> void:
 	play_card_sound()
-	player.stats.health *= 2
+	var doubled_health := player.stats.health * 2
+	player.stats.max_health = maxi(player.stats.max_health, doubled_health)
+	player.stats.health = doubled_health
 	player.stats.blood_ritual_loss_per_turn = 2
 	var pulse_tween := player.create_tween().set_loops()
 	pulse_tween.tween_property(player.sprite_2d, "modulate", Color(1.0, 0.25, 0.25), 0.2)

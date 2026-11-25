@@ -39,11 +39,22 @@ func _get_targets(targets: Array[Node]) -> Array[Node]:
 func play(targets: Array[Node], char_stats: CharacterStats) -> void:
 	Events.card_played.emit(self)
 	char_stats.mana -= cost
-	
+	var resolved_targets: Array[Node] = []
 	if is_single_targeted():
-		apply_effects(targets)
+		if not targets.is_empty():
+			resolved_targets.append(targets[0])
 	else:
-		apply_effects(_get_targets(targets))
-		
+		resolved_targets = _get_targets(targets)
+
+	if type == Type.ATTACK and not is_ultimate and not resolved_targets.is_empty():
+		var player := resolved_targets[0].get_tree().get_first_node_in_group("player")
+		if player and player.has_method("play_attack"):
+			var on_hit := func() -> void:
+				apply_effects(resolved_targets)
+			await player.call("play_attack", resolved_targets, on_hit)
+			return
+
+	apply_effects(resolved_targets)
+
 func apply_effects(_targets: Array[Node]) -> void:
 	pass

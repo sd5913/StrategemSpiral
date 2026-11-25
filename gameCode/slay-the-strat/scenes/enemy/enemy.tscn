@@ -31,6 +31,3 @@ offset_bottom = 26.0
 [node name="IntentUI" parent="." unique_id=1954972157 instance=ExtResource("5_gl05p")]
 offset_top = -27.0
 offset_bottom = -13.0
-
-[connection signal="area_entered" from="." to="." method="_on_area_entered"]
-[connection signal="area_exited" from="." to="." method="_on_area_exited"]

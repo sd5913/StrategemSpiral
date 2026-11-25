@@ -4,9 +4,10 @@ Platform: PC\
 Development tool: godot\
 Art direction: pixelated\
 \
-CREDITS:\
-GodotGameLab (tutorial videos for what the game is based on)\
-Kenny https://kenney.nl/assets/tiny-dungeon (for placeholder pixel art assets and font)
+## Credits
+
+- GodotGameLab — tutorial videos that informed the game's initial structure.
+- [Kenney's Tiny Dungeon](https://kenney.nl/assets/tiny-dungeon) — placeholder pixel-art assets and font, including source art used to assemble the battle background. Licensed under [CC0](https://creativecommons.org/publicdomain/zero/1.0/).
 
 
 

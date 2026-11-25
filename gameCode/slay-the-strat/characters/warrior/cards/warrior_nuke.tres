@@ -8,6 +8,7 @@
 script = ExtResource("2_script")
 id = "nuke_30_kill_streak"
 type = 2
+cost = 0
 is_ultimate = true
 icon = ExtResource("1_e8adg")
 tooltip_text = "[center][color=#c9b6ff][b]30-Kill[/b][/color] [color=#8de0ff]S W A S W D S W[/color][br][b]Win:[/b] Clear block; 30 to all incl. you. Fail: death.[/center]"

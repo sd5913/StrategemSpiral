@@ -97,8 +97,5 @@ func do_turn() -> void:
 		return
 	current_action.perform_action()
 
-func _on_area_entered(_area: Area2D) -> void:
-	arrow.show()
-
-func _on_area_exited(_area: Area2D) -> void:
-	arrow.hide()
+func set_target_indicator_active(active: bool) -> void:
+	arrow.visible = active

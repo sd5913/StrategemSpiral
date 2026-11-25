@@ -13,6 +13,13 @@ func disable_hand() -> void:
 	for card in get_children():
 		card.disabled = true
 
+func enable_hand() -> void:
+	for card in get_children():
+		if card.is_queued_for_deletion():
+			continue
+		card.disabled = false
+		card.playable = char_stats.can_play_card(card.card)
+
 func add_card(card: Card) -> void:
 	var new_card_ui := card_ui.instantiate()
 	add_child(new_card_ui)

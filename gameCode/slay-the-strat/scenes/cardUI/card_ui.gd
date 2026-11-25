@@ -52,9 +52,15 @@ func animate_to_position(new_position: Vector2, duration: float) -> void:
 func play() -> void:
 	if not card:
 		return
-	
-	card.play(targets, char_stats)
+
+	var hand_node := parent as Hand
+	if hand_node:
+		hand_node.disable_hand()
+
+	await card.play(targets, char_stats)
 	queue_free()
+	if hand_node:
+		hand_node.enable_hand()
 	
 func _on_gui_input(event: InputEvent) -> void:
 	card_state_machine.on_gui_input(event)

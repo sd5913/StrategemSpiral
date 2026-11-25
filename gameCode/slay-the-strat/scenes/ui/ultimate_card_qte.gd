@@ -1,6 +1,6 @@
 extends CanvasLayer
 
-const DURATION := 2.0
+const DURATION := 3.0
 
 @onready var panel: Panel = $Panel
 @onready var keys: HBoxContainer = %Keys
@@ -54,13 +54,14 @@ func _build_key_prompt() -> void:
 		style.corner_radius_bottom_left = 2
 		keycap.add_theme_stylebox_override("panel", style)
 
-		var label := Label.new()
-		label.text = _direction_letter(direction)
-		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		label.add_theme_font_size_override("font_size", 9)
-		label.add_theme_color_override("font_color", Color(0.88, 0.84, 1.0))
-		keycap.add_child(label)
+		var key_label := Label.new()
+		key_label.text = _direction_letter(direction)
+		key_label.custom_minimum_size = Vector2(10, 10)
+		key_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		key_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		key_label.add_theme_color_override("font_color", Color(0.96, 0.93, 1.0))
+		key_label.add_theme_font_size_override("font_size", 8)
+		keycap.add_child(key_label)
 		keys.add_child(keycap)
 		keycaps.append(keycap)
 		keycap_styles.append(style)

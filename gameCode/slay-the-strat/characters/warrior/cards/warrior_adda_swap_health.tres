@@ -8,7 +8,8 @@
 script = ExtResource("2_script")
 id = "adda_swap_health"
 type = 2
+cost = 0
 is_ultimate = true
 icon = ExtResource("1_icon")
-tooltip_text = "[center][color=#c9b6ff][b]ADDADD[/b][/color] [color=#8de0ff]A D D A D D[/color][br][b]Win:[/b] Swap HP; fail: heal enemies.[/center]"
+tooltip_text = "[center][color=#c9b6ff][b]ADDA[/b][/color] [color=#8de0ff]A D D A[/color][br][b]Win:[/b] Swap HP; fail: heal enemies.[/center]"
 sound = ExtResource("3_sound")
