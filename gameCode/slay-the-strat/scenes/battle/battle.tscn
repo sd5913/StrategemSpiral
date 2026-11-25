@@ -14,6 +14,7 @@
 [ext_resource type="Resource" uid="uid://c3bvtohawgit3" path="res://enemies/gob/gob_enemy.tres" id="8_mvulk"]
 [ext_resource type="Script" uid="uid://d3plsvl8k8i2i" path="res://scenes/player/player_handler.gd" id="8_mxe8n"]
 [ext_resource type="Resource" uid="uid://b36nwrw363ix2" path="res://enemies/golem/golem_enemy.tres" id="9_w40i5"]
+[ext_resource type="Resource" path="res://enemies/wolf/wolf_enemy.tres" id="10_wolf"]
 [ext_resource type="PackedScene" uid="uid://b8jddn86dqd4h" path="res://scenes/ui/mana_ui.tscn" id="11_fisqk"]
 [ext_resource type="PackedScene" uid="uid://5ly43afer2n3" path="res://scenes/ui/tooltip.tscn" id="12_mxe8n"]
 [ext_resource type="Theme" uid="uid://bp6mbsxro77ws" path="res://main_theme.tres" id="13_icoan"]
@@ -28,6 +29,10 @@ size = Vector2(256, 100)
 script = ExtResource("1_kd6yx")
 char_stats = ExtResource("4_oiw7q")
 music = ExtResource("3_n6gaa")
+ghost_enemy_stats = ExtResource("5_icoan")
+gob_enemy_stats = ExtResource("8_mvulk")
+golem_enemy_stats = ExtResource("9_w40i5")
+wolf_enemy_stats = ExtResource("10_wolf")
 metadata/_edit_lock_ = true
 
 [node name="Background" type="Sprite2D" parent="." unique_id=712301287]

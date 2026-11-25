@@ -1,0 +1,30 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scenes/ui/start_screen.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://ddx1gjyp55e00" path="res://art/start.png" id="2_texture"]
+[ext_resource type="Theme" uid="uid://bp6mbsxro77ws" path="res://main_theme.tres" id="3_theme"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_title"]
+font_size = 12
+font_color = Color(1, 0.843137, 0, 1)
+outline_size = 2
+outline_color = Color(0.113725, 0.062745, 0.066667, 1)
+
+[node name="StartScreen" type="Node2D"]
+script = ExtResource("1_script")
+
+[node name="Background" type="Sprite2D" parent="."]
+texture = ExtResource("2_texture")
+centered = false
+
+[node name="Title" type="Label" parent="."]
+anchors_preset = 0
+offset_left = 0.0
+offset_top = 18.0
+offset_right = 256.0
+offset_bottom = 38.0
+theme = ExtResource("3_theme")
+text = "Slay the Strat"
+label_settings = SubResource("LabelSettings_title")
+horizontal_alignment = 1
+vertical_alignment = 1

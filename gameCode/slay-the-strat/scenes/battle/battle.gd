@@ -2,6 +2,10 @@ extends Node2D
 
 @export var char_stats: CharacterStats
 @export var music: AudioStream
+@export var ghost_enemy_stats: EnemyStats
+@export var gob_enemy_stats: EnemyStats
+@export var golem_enemy_stats: EnemyStats
+@export var wolf_enemy_stats: EnemyStats
 
 @onready var battle_ui: BattleUI = $BattleUI as BattleUI
 @onready var player_handler: PlayerHandler = $PlayerHandler as PlayerHandler
@@ -12,6 +16,8 @@ var battle_over_resolution_in_progress := false
 
 
 func _ready() -> void:
+	_shuffle_enemy_types()
+
 	var new_stats: CharacterStats = char_stats.create_instance()
 	battle_ui.char_stats = new_stats
 	player.stats = new_stats
@@ -28,6 +34,23 @@ func _ready() -> void:
 	
 	start_battle(new_stats)
 	
+func _shuffle_enemy_types() -> void:
+	var shuffled_stats: Array[EnemyStats] = [
+		ghost_enemy_stats,
+		gob_enemy_stats,
+		golem_enemy_stats,
+		wolf_enemy_stats,
+	]
+	shuffled_stats.shuffle()
+	shuffled_stats.resize(3)
+
+	var enemy_index := 0
+	for child in enemy_handler.get_children():
+		var enemy := child as Enemy
+		if enemy:
+			enemy.stats = shuffled_stats[enemy_index]
+			enemy_index += 1
+
 func start_battle(stats: CharacterStats) -> void:
 	get_tree().paused = false
 	MusicPlayer.play(music, true)
