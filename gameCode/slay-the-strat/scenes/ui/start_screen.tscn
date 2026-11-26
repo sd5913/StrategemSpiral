@@ -1,6 +1,6 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene format=3 uid="uid://cbpacihwmhvc"]
 
-[ext_resource type="Script" path="res://scenes/ui/start_screen.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://0p0uuj7jolhu" path="res://scenes/ui/start_screen.gd" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://ddx1gjyp55e00" path="res://art/start.png" id="2_texture"]
 [ext_resource type="Theme" uid="uid://bp6mbsxro77ws" path="res://main_theme.tres" id="3_theme"]
 
@@ -10,16 +10,14 @@ font_color = Color(1, 0.843137, 0, 1)
 outline_size = 2
 outline_color = Color(0.113725, 0.062745, 0.066667, 1)
 
-[node name="StartScreen" type="Node2D"]
+[node name="StartScreen" type="Node2D" unique_id=56370071]
 script = ExtResource("1_script")
 
-[node name="Background" type="Sprite2D" parent="."]
+[node name="Background" type="Sprite2D" parent="." unique_id=1928224858]
 texture = ExtResource("2_texture")
 centered = false
 
-[node name="Title" type="Label" parent="."]
-anchors_preset = 0
-offset_left = 0.0
+[node name="Title" type="Label" parent="." unique_id=69851288]
 offset_top = 18.0
 offset_right = 256.0
 offset_bottom = 38.0
