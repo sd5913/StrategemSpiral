@@ -7,6 +7,7 @@ func apply_effects(targets: Array[Node]) -> void:
 	for target in targets:
 		var player := target as Player
 		if player:
+			play_card_sound()
 			_pending_mana_overflow += 2
 			if not _awaiting_hand_draw:
 				_awaiting_hand_draw = true

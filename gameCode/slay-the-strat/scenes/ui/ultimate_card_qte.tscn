@@ -1,0 +1,78 @@
+[gd_scene format=3 uid="uid://cxmrr03ccblpj"]
+
+[ext_resource type="Script" uid="uid://n6kcp3iw1mc2" path="res://scenes/ui/ultimate_card_qte.gd" id="1_qte"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_qte"]
+bg_color = Color(0.08, 0.07, 0.18, 0.96)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.44, 0.34, 0.78, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+shadow_color = Color(0.22, 0.12, 0.52, 0.72)
+shadow_size = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_meter_background"]
+bg_color = Color(0.1, 0.09, 0.2, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_meter_fill"]
+bg_color = Color(0.55, 0.39, 0.93, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[node name="UltimateCardQTE" type="CanvasLayer" unique_id=1343359229]
+process_mode = 3
+layer = 10
+script = ExtResource("1_qte")
+
+[node name="Panel" type="Panel" parent="." unique_id=789885338]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -80.0
+offset_top = -28.0
+offset_right = 80.0
+offset_bottom = 28.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_qte")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel" unique_id=1832939996]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 2
+
+[node name="PromptLabel" type="Label" parent="Panel/VBoxContainer" unique_id=1170617782]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.72, 0.66, 0.9, 1)
+theme_override_font_sizes/font_size = 7
+text = "ENTER SEQUENCE"
+horizontal_alignment = 1
+
+[node name="Keys" type="HBoxContainer" parent="Panel/VBoxContainer" unique_id=1490205737]
+unique_name_in_owner = true
+layout_mode = 2
+alignment = 1
+
+[node name="Meter" type="ProgressBar" parent="Panel/VBoxContainer" unique_id=165806813]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(130, 8)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_styles/background = SubResource("StyleBoxFlat_meter_background")
+theme_override_styles/fill = SubResource("StyleBoxFlat_meter_fill")
+show_percentage = false

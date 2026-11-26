@@ -1,0 +1,14 @@
+[gd_resource type="Resource" format=3 uid="uid://cxuyojehv4euy"]
+
+[ext_resource type="Texture2D" uid="uid://cgopx2ponr1qi" path="res://art/tile_0121.png" id="1_76a42"]
+[ext_resource type="Script" uid="uid://bcn3oyq54j7hx" path="res://characters/warrior/cards/warrior_blood_ritual.gd" id="2_script"]
+[ext_resource type="AudioStream" uid="uid://dkyfa5jnb44ee" path="res://art/corruptedCharge-boosted.mp3" id="3_76a42"]
+
+[resource]
+script = ExtResource("2_script")
+id = "wssws_blood_ritual"
+type = 2
+is_ultimate = true
+icon = ExtResource("1_76a42")
+tooltip_text = "[center][color=#c9b6ff][b]Blood Ritual[/b][/color] [color=#8de0ff]W S S W S[/color][br][b]Win:[/b] Double HP; lose 7/turn. Fail: halve HP.[/center]"
+sound = ExtResource("3_76a42")
