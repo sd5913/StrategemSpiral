@@ -22,4 +22,5 @@ if [[ ! -f "$data_dir/godot/export_templates/$version.stable/linux_release.x86_6
   cp -a "$tools_dir/templates/." "$data_dir/godot/export_templates/$version.stable/"
 fi
 
+bash .codex/test.sh --install-only
 "$tools_dir/godot" --headless --path "$project_dir" --import

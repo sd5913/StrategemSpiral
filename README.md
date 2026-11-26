@@ -23,5 +23,19 @@ First interaction to test: input system logic
 
 
 
+## Automated tests
+
+On Linux, run `bash .codex/test.sh` with Godot 4.7.2 on `PATH`. Set `GODOT_BIN`
+to use a specific executable. The runner installs the pinned GUT add-on, imports
+the project, and runs the GDScript unit and battle-scene tests headlessly.
+
+The CI workflow also supplies two inputs for release checks:
+
+- `STRATEGEM_LINUX_EXPORT` is the absolute path to the Linux executable.
+- `STRATEGEM_RELEASE_METADATA` is the absolute path to the output of
+  `gh release view --json tagName,body,assets`.
+
+Both are optional locally. GUT marks the corresponding checks pending when an
+input is absent. The suite exits with code 1 when an assertion fails.
 
 
