@@ -3,6 +3,7 @@ extends Node
 
 const START_SCREEN_SCENE := preload("res://scenes/ui/start_screen.tscn")
 const BATTLE_SCENE := preload("res://scenes/battle/battle.tscn")
+const AI_HUD_SCRIPT := preload("res://ai_test_system/ai_hud_autoload.gd")
 
 const CARD_AXE := preload("res://characters/warrior/cards/warrior_axe_attack.tres")
 const CARD_SWEEP := preload("res://characters/warrior/cards/warrior_sweep_attack.tres")
@@ -33,18 +34,37 @@ func run_all_checks(host_parent: Node) -> Array[Dictionary]:
 	results.append(await _test_wolf_double_hit_lifesteal(host_parent))
 	results.append(await _test_ghost_conditional_mega_block(host_parent))
 	results.append(await _test_gob_kamikaze_self_damage(host_parent))
-	results.append(await _test_ultimate_qte_wasd_and_obliteration(host_parent))
+	results.append(await _test_nuke_mutual_obliteration(host_parent))
+	results.append(_test_ai_overlay_disabled_in_normal_and_export())
 
 	get_tree().paused = false
 	Engine.time_scale = saved_scale
 	return results
 
 
+func run_ultimate_qte_matrix(host_parent: Node) -> Array[Dictionary]:
+	var matrix: Array[Dictionary] = []
+	var saved_scale: float = Engine.time_scale
+
+	matrix.append(await _test_swap_hp_qte_success(host_parent))
+	matrix.append(await _test_swap_hp_qte_failure(host_parent))
+	matrix.append(await _test_blood_ritual_qte_success_with_reset_recovery(host_parent))
+	matrix.append(await _test_blood_ritual_qte_failure(host_parent))
+	matrix.append(await _test_last_gasp_qte_success(host_parent))
+	matrix.append(await _test_last_gasp_qte_failure(host_parent))
+	matrix.append(await _test_nuke_qte_success_single_application(host_parent))
+	matrix.append(await _test_nuke_qte_failure(host_parent))
+
+	get_tree().paused = false
+	Engine.time_scale = saved_scale
+	return matrix
+
+
 func _spawn_isolated_battle(host_parent: Node) -> Node2D:
 	get_tree().paused = false
 	var b: Node2D = BATTLE_SCENE.instantiate() as Node2D
 	host_parent.add_child(b)
-	await get_tree().create_timer(1.2).timeout # Wait for initial 4-card draw tween (4 * 0.25s)
+	await get_tree().create_timer(1.2).timeout
 	return b
 
 
@@ -56,6 +76,14 @@ func _cleanup_node(node: Node) -> void:
 	await get_tree().process_frame
 
 
+func _wait_for_qte_timer_expiration(qte_layer: CanvasLayer, max_virtual_wait: float = 8.0) -> bool:
+	var waited: float = 0.0
+	while is_instance_valid(qte_layer) and bool(qte_layer.get("active")) and waited < max_virtual_wait:
+		waited += get_process_delta_time()
+		await get_tree().process_frame
+	return is_instance_valid(qte_layer) and not bool(qte_layer.get("active"))
+
+
 func _make_result(test_id: String, title: String, passed: bool, details: String) -> Dictionary:
 	return {
 		"id": test_id,
@@ -64,6 +92,32 @@ func _make_result(test_id: String, title: String, passed: bool, details: String)
 		"details": details
 	}
 
+
+func _make_qte_record(
+	test_id: String,
+	card_id: String,
+	sequence_str: String,
+	path_type: String,
+	reset_checked: bool,
+	single_apply_checked: bool,
+	passed: bool,
+	details: String
+) -> Dictionary:
+	return {
+		"id": test_id,
+		"card_id": card_id,
+		"sequence": sequence_str,
+		"path": path_type,
+		"wrong_key_reset_verified": reset_checked,
+		"single_effect_verified": single_apply_checked,
+		"passed": passed,
+		"details": details
+	}
+
+
+# ============================================================================
+# Core Mechanics & Export-Safety Checks (FT-01 .. FT-11)
+# ============================================================================
 
 func _test_start_screen_structure(host_parent: Node) -> Dictionary:
 	var screen: Node2D = START_SCREEN_SCENE.instantiate() as Node2D
@@ -102,7 +156,7 @@ func _test_enemy_pool_randomization(host_parent: Node) -> Dictionary:
 			seen_types[t] = true
 			local_set[t] = true
 		if local_set.size() != 3:
-			valid_counts = false # Must be 3 distinct enemy types per battle
+			valid_counts = false
 		await _cleanup_node(b)
 
 	var all_four_present: bool = seen_types.size() >= 4 and valid_counts
@@ -121,7 +175,6 @@ func _test_basic_cards_and_attack_lunge(host_parent: Node) -> Dictionary:
 	var player: Player = b.get_node("Player") as Player
 	var eh: EnemyHandler = b.get_node("EnemyHandler") as EnemyHandler
 
-	# Force deterministic enemies without taunt
 	for child in eh.get_children():
 		var e := child as Enemy
 		e.is_protecting_allies = false
@@ -133,14 +186,14 @@ func _test_basic_cards_and_attack_lunge(host_parent: Node) -> Dictionary:
 	player.stats.mana = 3
 	player.stats.block = 0
 
-	# 1) Block card (+5 block, -1 mana)
 	var block_card: Card = CARD_BLOCK.duplicate()
-	await block_card.play([player], player.stats)
+	var self_targets: Array[Node] = [player]
+	await block_card.play(self_targets, player.stats)
 	var block_ok: bool = player.stats.block == 5 and player.stats.mana == 2
 
-	# 2) Axe Attack (6 dmg + player lunge animation, -1 mana)
 	var axe_card: Card = CARD_AXE.duplicate()
-	await axe_card.play([target_enemy], player.stats)
+	var enemy_targets: Array[Node] = [target_enemy]
+	await axe_card.play(enemy_targets, player.stats)
 	await get_tree().create_timer(0.25).timeout
 	var expected_hp: int = maxi(0, hp_before - 6)
 	var axe_ok: bool = (not is_instance_valid(target_enemy) and expected_hp == 0) or (is_instance_valid(target_enemy) and target_enemy.stats.health == expected_hp)
@@ -160,11 +213,11 @@ func _test_mana_surge_overflow(host_parent: Node) -> Dictionary:
 	var battle_ui: BattleUI = b.get_node("BattleUI") as BattleUI
 
 	player.stats.mana = 3
-	player.stats.block = 30 # Survive enemy turn easily
+	player.stats.block = 30
 	var surge: Card = CARD_MANA_SURGE.duplicate()
-	await surge.play([player], player.stats)
+	var self_targets: Array[Node] = [player]
+	await surge.play(self_targets, player.stats)
 
-	# End player turn and wait until next player_hand_drawn
 	battle_ui.end_turn_button.pressed.emit()
 	await Events.player_hand_drawn
 	await get_tree().process_frame
@@ -185,7 +238,6 @@ func _test_hand_single_ultimate_cap(host_parent: Node) -> Dictionary:
 	var ph: PlayerHandler = b.get_node("PlayerHandler") as PlayerHandler
 	var hand: Hand = b.get_node("BattleUI/hand") as Hand
 
-	# Clear hand and load draw pile with 4 Ultimates + 2 normal cards
 	for c in hand.get_children():
 		c.queue_free()
 	await get_tree().process_frame
@@ -236,7 +288,6 @@ func _test_golem_ally_protection_taunt(host_parent: Node) -> Dictionary:
 	var gob_hp_before: int = e1.stats.health
 	e0.is_protecting_allies = true
 
-	# Attack Gob while Golem is protecting allies
 	e1.take_damage(6)
 	await get_tree().create_timer(0.25).timeout
 
@@ -261,7 +312,7 @@ func _test_wolf_double_hit_lifesteal(host_parent: Node) -> Dictionary:
 	wolf.stats = ENEMY_WOLF
 	await get_tree().process_frame
 
-	wolf.stats.health = 5 # Damaged out of 10 max HP
+	wolf.stats.health = 5
 	player.stats.block = 0
 	player.stats.health = 40
 
@@ -292,7 +343,6 @@ func _test_ghost_conditional_mega_block(host_parent: Node) -> Dictionary:
 
 	ghost.current_action = null
 	ghost.update_action()
-	# Drop Ghost HP to 5 (<= 6 threshold) -> should switch to conditional Mega Block
 	ghost.stats.health = 5
 	var info: Dictionary = AIBotBrain.analyze_enemy_intent(ghost)
 	var switched_to_mega: bool = str(info["action_id"]) == "ghost_mega_block"
@@ -323,7 +373,6 @@ func _test_gob_kamikaze_self_damage(host_parent: Node) -> Dictionary:
 	player.stats.block = 0
 	player.stats.health = 40
 
-	# Select gob_attack_action directly from its action picker
 	var attack_action: EnemyAction = null
 	for child in gob.enemy_action_picker.get_children():
 		var act := child as EnemyAction
@@ -338,46 +387,23 @@ func _test_gob_kamikaze_self_damage(host_parent: Node) -> Dictionary:
 		gob.do_turn()
 		await Events.enemy_action_completed
 		await get_tree().create_timer(0.3).timeout
+		var player_hp_after: int = player.stats.health
 		var gob_dead: bool = not is_instance_valid(gob) or gob.stats.health <= 0
-		passed = player.stats.health == 26 and gob_dead
-		detail_str = "Player HP 40->%d (-14), Gob self-destructed=%s" % [player.stats.health, str(gob_dead)]
+		passed = player_hp_after == 26 and gob_dead
+		detail_str = "Player HP 40->%d (-14), Gob self-destructed=%s" % [player_hp_after, str(gob_dead)]
 
 	await _cleanup_node(b)
 	return _make_result("FT-09", "Gob Kamikaze Attack (14 Player Dmg + Self-Kill)", passed, detail_str)
 
 
-func _test_ultimate_qte_wasd_and_obliteration(host_parent: Node) -> Dictionary:
-	# Part A: Last Gasp QTE Success via real WASD InputEventKey (D S D S D S -> 3x multiplier)
-	var b1: Node2D = await _spawn_isolated_battle(host_parent)
-	var p1: Player = b1.get_node("Player") as Player
-	var qte1: CanvasLayer = b1.get_node("UltimateCardQTE") as CanvasLayer
-
+func _test_nuke_mutual_obliteration(host_parent: Node) -> Dictionary:
 	var saved_scale: float = Engine.time_scale
-	Engine.time_scale = 3.0
-
-	var gasp: Card = CARD_LAST_GASP.duplicate()
-	gasp.play([p1], p1.stats)
-	await get_tree().process_frame
-
-	var qte_started_ok: bool = bool(qte1.get("active"))
-	for key in [KEY_D, KEY_S, KEY_D, KEY_S, KEY_D, KEY_S]:
-		var ev := InputEventKey.new()
-		ev.keycode = key
-		ev.pressed = true
-		b1.get_viewport().push_input(ev)
-		await get_tree().process_frame
-	await get_tree().create_timer(0.25).timeout
-
-	var gasp_ok: bool = qte_started_ok and p1.stats.damage_multiplier == 3 and p1.stats.health == 5
-	await _cleanup_node(b1)
-
-	# Part B: Nuke QTE Success when Player <= 30 HP and all Enemies <= 30 HP -> OBLITERATED outcome!
 	Engine.time_scale = 5.0
-	var b2: Node2D = await _spawn_isolated_battle(host_parent)
-	var p2: Player = b2.get_node("Player") as Player
-	var eh2: EnemyHandler = b2.get_node("EnemyHandler") as EnemyHandler
-	p2.stats.health = 25
-	for child in eh2.get_children():
+	var b: Node2D = await _spawn_isolated_battle(host_parent)
+	var p: Player = b.get_node("Player") as Player
+	var eh: EnemyHandler = b.get_node("EnemyHandler") as EnemyHandler
+	p.stats.health = 25
+	for child in eh.get_children():
 		var e := child as Enemy
 		e.stats.health = 10
 
@@ -387,33 +413,457 @@ func _test_ultimate_qte_wasd_and_obliteration(host_parent: Node) -> Dictionary:
 	Events.battle_over_screen_requested.connect(on_over)
 
 	var nuke: Card = CARD_NUKE.duplicate()
-	nuke.play([p2], p2.stats)
+	var targets: Array[Node] = [p]
+	nuke.play(targets, p.stats)
 	await get_tree().process_frame
 
-	# Nuke sequence: S W A S W D S W
 	for key in [KEY_S, KEY_W, KEY_A, KEY_S, KEY_W, KEY_D, KEY_S, KEY_W]:
-		var ev := InputEventKey.new()
-		ev.keycode = key
-		ev.pressed = true
-		b2.get_viewport().push_input(ev)
+		AIBattleAgent.inject_wasd_key(b, key)
 		await get_tree().process_frame
 
-	# Wait for nuclear cutscene resolution
-	var safety: int = 0
-	while captured_outcomes.is_empty() and safety < 600:
-		safety += 1
+	var waited: float = 0.0
+	while captured_outcomes.is_empty() and waited < 12.0:
+		waited += get_process_delta_time()
 		await get_tree().process_frame
 
 	if Events.battle_over_screen_requested.is_connected(on_over):
 		Events.battle_over_screen_requested.disconnect(on_over)
 
-	var nuke_obliterated_ok: bool = not captured_outcomes.is_empty() and captured_outcomes[0] == int(BattleOverPanel.Type.OBLITERATED)
-	await _cleanup_node(b2)
+	var passed: bool = not captured_outcomes.is_empty() and captured_outcomes[0] == int(BattleOverPanel.Type.OBLITERATED)
+	await _cleanup_node(b)
 	Engine.time_scale = saved_scale
-
 	return _make_result(
 		"FT-10",
-		"Ultimate WASD QTE Input & Nuke OBLITERATED Outcome",
-		gasp_ok and nuke_obliterated_ok,
-		"LastGasp WASD->3x mult (%s), Nuke WASD->OBLITERATED (%s)" % [str(gasp_ok), str(nuke_obliterated_ok)]
+		"Nuke Mutual Destruction -> OBLITERATED State",
+		passed,
+		"Player (25 HP) & all enemies (10 HP) wiped via WASD Nuke -> OBLITERATED=%s" % str(passed)
+	)
+
+
+func _test_ai_overlay_disabled_in_normal_and_export() -> Dictionary:
+	var normal_play_disabled: bool = not AI_HUD_SCRIPT.should_enable_overlay(PackedStringArray([]), false, false, "")
+	var export_blocked_even_with_flag: bool = not AI_HUD_SCRIPT.should_enable_overlay(
+		PackedStringArray(["--ai-overlay", "--enable-ai-overlay"]), true, false, "1"
+	)
+	var explicit_debug_enabled: bool = AI_HUD_SCRIPT.should_enable_overlay(
+		PackedStringArray(["--ai-overlay"]), false, false, ""
+	)
+
+	var autoload_node: Node = get_node_or_null("/root/AITestSystem")
+	var runtime_clean: bool = true
+	if autoload_node:
+		var combined_args: PackedStringArray = OS.get_cmdline_args() + OS.get_cmdline_user_args()
+		var has_flag: bool = combined_args.has("--ai-overlay") or combined_args.has("--enable-ai-overlay")
+		if not has_flag:
+			runtime_clean = not bool(autoload_node.call("is_overlay_active")) and autoload_node.get_child_count() == 0
+
+	var passed: bool = normal_play_disabled and export_blocked_even_with_flag and explicit_debug_enabled and runtime_clean
+	return _make_result(
+		"FT-11",
+		"AI Overlay Disabled in Normal Gameplay & Exported Builds",
+		passed,
+		"NormalOff=%s, ExportBlocked=%s, ExplicitFlagOn=%s, RuntimeTreeClean=%s" % [
+			str(normal_play_disabled), str(export_blocked_even_with_flag), str(explicit_debug_enabled), str(runtime_clean)
+		]
+	)
+
+
+# ============================================================================
+# Input-Driven Ultimate Card QTE Matrix (All 4 Cards x Success & Failure Paths)
+# ============================================================================
+
+func _test_swap_hp_qte_success(host_parent: Node) -> Dictionary:
+	Engine.time_scale = 3.0
+	var b: Node2D = await _spawn_isolated_battle(host_parent)
+	var p: Player = b.get_node("Player") as Player
+	var eh: EnemyHandler = b.get_node("EnemyHandler") as EnemyHandler
+	var qte: CanvasLayer = b.get_node("UltimateCardQTE") as CanvasLayer
+
+	var e0: Enemy = eh.get_child(0) as Enemy
+	var e1: Enemy = eh.get_child(1) as Enemy
+	var e2: Enemy = eh.get_child(2) as Enemy
+	e0.stats = ENEMY_GOLEM
+	e1.stats = ENEMY_GHOST
+	e2.stats = ENEMY_WOLF
+	await get_tree().process_frame
+
+	p.stats.health = 12
+	e0.stats.health = 20
+	e1.stats.health = 10
+	e2.stats.health = 10 # Sum = 40; ceili(12 / 3) = 4
+
+	var card: Card = CARD_SWAP_HP.duplicate()
+	var targets: Array[Node] = [p]
+	card.play(targets, p.stats)
+	await get_tree().process_frame
+
+	var started_ok: bool = bool(qte.get("active"))
+	for key in [KEY_A, KEY_D, KEY_D, KEY_A, KEY_D, KEY_D]:
+		AIBattleAgent.inject_wasd_key(b, key)
+		await get_tree().process_frame
+
+	# Extra trailing key after completion must be ignored (effect applied strictly once!)
+	AIBattleAgent.inject_wasd_key(b, KEY_D)
+	await get_tree().process_frame
+
+	var qte_closed: bool = not bool(qte.get("active"))
+	var p_hp: int = p.stats.health
+	var enemies_4hp: bool = e0.stats.health == 4 and e1.stats.health == 4 and e2.stats.health == 4
+	var passed: bool = started_ok and qte_closed and p_hp == 40 and enemies_4hp
+
+	await _cleanup_node(b)
+	return _make_qte_record(
+		"QTE-01",
+		"adda_swap_health",
+		"A D D A D D",
+		"SUCCESS",
+		false,
+		true,
+		passed,
+		"WASD completed QTE once: Player HP 12->%d (expected 40), Enemies [20,10,10]->[4,4,4] (%s)" % [p_hp, str(enemies_4hp)]
+	)
+
+
+func _test_swap_hp_qte_failure(host_parent: Node) -> Dictionary:
+	Engine.time_scale = 4.0
+	var b: Node2D = await _spawn_isolated_battle(host_parent)
+	var p: Player = b.get_node("Player") as Player
+	var eh: EnemyHandler = b.get_node("EnemyHandler") as EnemyHandler
+	var qte: CanvasLayer = b.get_node("UltimateCardQTE") as CanvasLayer
+
+	var e0: Enemy = eh.get_child(0) as Enemy
+	var e1: Enemy = eh.get_child(1) as Enemy
+	var e2: Enemy = eh.get_child(2) as Enemy
+	e0.stats = ENEMY_GOLEM
+	e1.stats = ENEMY_GHOST
+	e2.stats = ENEMY_WOLF
+	await get_tree().process_frame
+
+	p.stats.health = 15 # ceili(15 / 3) = +5 heal to enemies on failure
+	e0.stats.health = 20
+	e1.stats.health = 4
+	e2.stats.health = 4
+
+	var card: Card = CARD_SWAP_HP.duplicate()
+	var targets: Array[Node] = [p]
+	card.play(targets, p.stats)
+	await get_tree().process_frame
+
+	# Advance 2 steps (A, D -> progress=2), then inject wrong key W -> progress resets to 0!
+	AIBattleAgent.inject_wasd_key(b, KEY_A)
+	AIBattleAgent.inject_wasd_key(b, KEY_D)
+	var prog_before_wrong: int = int(qte.get("progress"))
+	AIBattleAgent.inject_wasd_key(b, KEY_W)
+	var prog_after_wrong: int = int(qte.get("progress"))
+	var reset_ok: bool = prog_before_wrong == 2 and prog_after_wrong == 0 and bool(qte.get("active"))
+
+	var expired_ok: bool = await _wait_for_qte_timer_expiration(qte)
+	var golem_hp: int = e0.stats.health
+	var ghost_hp: int = e1.stats.health
+	var wolf_hp: int = e2.stats.health
+	var heal_applied: bool = p.stats.health == 15 and golem_hp == 25 and ghost_hp == 9 and wolf_hp == 9
+	var passed: bool = reset_ok and expired_ok and heal_applied
+
+	await _cleanup_node(b)
+	return _make_qte_record(
+		"QTE-02",
+		"adda_swap_health",
+		"A D -> W(reset) -> Timeout",
+		"FAILURE",
+		reset_ok,
+		true,
+		passed,
+		"Progress %d->%d on wrong key W, timer expired -> Enemies healed +5 ([20,4,4]->[%d,%d,%d])" % [
+			prog_before_wrong, prog_after_wrong, golem_hp, ghost_hp, wolf_hp
+		]
+	)
+
+
+func _test_blood_ritual_qte_success_with_reset_recovery(host_parent: Node) -> Dictionary:
+	Engine.time_scale = 3.0
+	var b: Node2D = await _spawn_isolated_battle(host_parent)
+	var p: Player = b.get_node("Player") as Player
+	var qte: CanvasLayer = b.get_node("UltimateCardQTE") as CanvasLayer
+
+	p.stats.health = 18
+
+	var card: Card = CARD_BLOOD_RITUAL.duplicate()
+	var targets: Array[Node] = [p]
+	card.play(targets, p.stats)
+	await get_tree().process_frame
+
+	# Partial W, S (progress=2) -> wrong key D (progress=0) -> full W, S, S, W, S
+	AIBattleAgent.inject_wasd_key(b, KEY_W)
+	AIBattleAgent.inject_wasd_key(b, KEY_S)
+	var prog_mid: int = int(qte.get("progress"))
+	AIBattleAgent.inject_wasd_key(b, KEY_D)
+	var prog_reset: int = int(qte.get("progress"))
+	var reset_ok: bool = prog_mid == 2 and prog_reset == 0 and bool(qte.get("active"))
+
+	for key in [KEY_W, KEY_S, KEY_S, KEY_W, KEY_S]:
+		AIBattleAgent.inject_wasd_key(b, key)
+		await get_tree().process_frame
+
+	# Extra key after completion to verify single effect application (18 * 2 = 36, not 45)
+	AIBattleAgent.inject_wasd_key(b, KEY_S)
+	await get_tree().process_frame
+
+	var hp_after: int = p.stats.health
+	var bleed_after: int = p.stats.blood_ritual_loss_per_turn
+	var passed: bool = reset_ok and not bool(qte.get("active")) and hp_after == 36 and bleed_after == 7
+
+	await _cleanup_node(b)
+	return _make_qte_record(
+		"QTE-03",
+		"wssws_blood_ritual",
+		"W S -> D(reset) -> W S S W S",
+		"SUCCESS",
+		reset_ok,
+		true,
+		passed,
+		"Reset %d->%d then completed once: Player HP 18->%d (expected 36), bleed=%d/turn" % [
+			prog_mid, prog_reset, hp_after, bleed_after
+		]
+	)
+
+
+func _test_blood_ritual_qte_failure(host_parent: Node) -> Dictionary:
+	Engine.time_scale = 4.0
+	var b: Node2D = await _spawn_isolated_battle(host_parent)
+	var p: Player = b.get_node("Player") as Player
+	var qte: CanvasLayer = b.get_node("UltimateCardQTE") as CanvasLayer
+
+	p.stats.health = 21
+	p.stats.block = 5
+
+	var card: Card = CARD_BLOOD_RITUAL.duplicate()
+	var targets: Array[Node] = [p]
+	card.play(targets, p.stats)
+	await get_tree().process_frame
+
+	AIBattleAgent.inject_wasd_key(b, KEY_W)
+	var prog_mid: int = int(qte.get("progress"))
+	AIBattleAgent.inject_wasd_key(b, KEY_A)
+	var prog_reset: int = int(qte.get("progress"))
+	var reset_ok: bool = prog_mid == 1 and prog_reset == 0 and bool(qte.get("active"))
+
+	var expired_ok: bool = await _wait_for_qte_timer_expiration(qte)
+	await get_tree().create_timer(0.3).timeout
+
+	var hp_after: int = p.stats.health
+	var block_after: int = p.stats.block
+	var bleed_after: int = p.stats.blood_ritual_loss_per_turn
+	var passed: bool = reset_ok and expired_ok and hp_after == 11 and block_after == 0 and bleed_after == 0
+
+	await _cleanup_node(b)
+	return _make_qte_record(
+		"QTE-04",
+		"wssws_blood_ritual",
+		"W -> A(reset) -> Timeout",
+		"FAILURE",
+		reset_ok,
+		true,
+		passed,
+		"Progress %d->%d on wrong key A, timer expired -> Block 5->%d, HP halved 21->%d (expected 11)" % [
+			prog_mid, prog_reset, block_after, hp_after
+		]
+	)
+
+
+func _test_last_gasp_qte_success(host_parent: Node) -> Dictionary:
+	Engine.time_scale = 3.0
+	var b: Node2D = await _spawn_isolated_battle(host_parent)
+	var p: Player = b.get_node("Player") as Player
+	var qte: CanvasLayer = b.get_node("UltimateCardQTE") as CanvasLayer
+
+	p.stats.health = 30
+	p.stats.block = 5
+
+	var card: Card = CARD_LAST_GASP.duplicate()
+	var targets: Array[Node] = [p]
+	card.play(targets, p.stats)
+	await get_tree().process_frame
+
+	for key in [KEY_D, KEY_S, KEY_D, KEY_S, KEY_D, KEY_S]:
+		AIBattleAgent.inject_wasd_key(b, key)
+		await get_tree().process_frame
+
+	AIBattleAgent.inject_wasd_key(b, KEY_S)
+	await get_tree().create_timer(0.3).timeout
+
+	var hp_after: int = p.stats.health
+	var mult_after: int = p.stats.damage_multiplier
+	var block_after: int = p.stats.block
+	var passed: bool = not bool(qte.get("active")) and hp_after == 5 and mult_after == 3 and block_after == 0
+
+	await _cleanup_node(b)
+	return _make_qte_record(
+		"QTE-05",
+		"last_gasp",
+		"D S D S D S",
+		"SUCCESS",
+		false,
+		true,
+		passed,
+		"WASD completed QTE once: HP 30->%d (expected 5), damage_multiplier=%dx (expected 3x)" % [hp_after, mult_after]
+	)
+
+
+func _test_last_gasp_qte_failure(host_parent: Node) -> Dictionary:
+	Engine.time_scale = 4.0
+	var b: Node2D = await _spawn_isolated_battle(host_parent)
+	var p: Player = b.get_node("Player") as Player
+	var qte: CanvasLayer = b.get_node("UltimateCardQTE") as CanvasLayer
+
+	p.stats.health = 30
+	p.stats.block = 5
+
+	var card: Card = CARD_LAST_GASP.duplicate()
+	var targets: Array[Node] = [p]
+	card.play(targets, p.stats)
+	await get_tree().process_frame
+
+	AIBattleAgent.inject_wasd_key(b, KEY_D)
+	AIBattleAgent.inject_wasd_key(b, KEY_S)
+	AIBattleAgent.inject_wasd_key(b, KEY_D)
+	var prog_mid: int = int(qte.get("progress"))
+	AIBattleAgent.inject_wasd_key(b, KEY_W)
+	var prog_reset: int = int(qte.get("progress"))
+	var reset_ok: bool = prog_mid == 3 and prog_reset == 0 and bool(qte.get("active"))
+
+	var expired_ok: bool = await _wait_for_qte_timer_expiration(qte)
+	await get_tree().create_timer(0.3).timeout
+
+	var hp_after: int = p.stats.health
+	var mult_after: int = p.stats.damage_multiplier
+	var passed: bool = reset_ok and expired_ok and hp_after == 5 and mult_after == 1
+
+	await _cleanup_node(b)
+	return _make_qte_record(
+		"QTE-06",
+		"last_gasp",
+		"D S D -> W(reset) -> Timeout",
+		"FAILURE",
+		reset_ok,
+		true,
+		passed,
+		"Progress %d->%d on wrong key W, timer expired -> HP 30->%d (5), damage_multiplier stayed %dx (no buff)" % [
+			prog_mid, prog_reset, hp_after, mult_after
+		]
+	)
+
+
+func _test_nuke_qte_success_single_application(host_parent: Node) -> Dictionary:
+	Engine.time_scale = 4.0
+	var b: Node2D = await _spawn_isolated_battle(host_parent)
+	var p: Player = b.get_node("Player") as Player
+	var eh: EnemyHandler = b.get_node("EnemyHandler") as EnemyHandler
+	var qte: CanvasLayer = b.get_node("UltimateCardQTE") as CanvasLayer
+
+	var e0: Enemy = eh.get_child(0) as Enemy
+	var e1: Enemy = eh.get_child(1) as Enemy
+	var e2: Enemy = eh.get_child(2) as Enemy
+	e0.stats = ENEMY_GOLEM
+	e1.stats = ENEMY_GHOST
+	e2.stats = ENEMY_WOLF
+	await get_tree().process_frame
+
+	p.stats.health = 42
+	p.stats.block = 6
+	e0.stats.health = 40
+	e0.stats.block = 8
+	e1.stats.health = 10
+	e2.stats.health = 10
+
+	var card: Card = CARD_NUKE.duplicate()
+	var targets: Array[Node] = [p]
+	card.play(targets, p.stats)
+	await get_tree().process_frame
+
+	for key in [KEY_S, KEY_W, KEY_A, KEY_S, KEY_W, KEY_D, KEY_S, KEY_W]:
+		AIBattleAgent.inject_wasd_key(b, key)
+		await get_tree().process_frame
+
+	AIBattleAgent.inject_wasd_key(b, KEY_W)
+
+	var waited: float = 0.0
+	while bool(b.get("battle_over_resolution_in_progress")) and waited < 15.0:
+		waited += get_process_delta_time()
+		await get_tree().process_frame
+	await get_tree().process_frame
+
+	var p_hp: int = p.stats.health
+	var golem_hp: int = e0.stats.health
+	var living_enemies: int = 0
+	for child in eh.get_children():
+		var en := child as Enemy
+		if is_instance_valid(en) and not en.is_queued_for_deletion() and en.stats.health > 0:
+			living_enemies += 1
+
+	var passed: bool = not bool(qte.get("active")) and p_hp == 12 and golem_hp == 10 and living_enemies == 1
+	await _cleanup_node(b)
+	return _make_qte_record(
+		"QTE-07",
+		"nuke_30_kill_streak",
+		"S W A S W D S W",
+		"SUCCESS",
+		false,
+		true,
+		passed,
+		"WASD completed Nuke once: Player HP 42->%d (-30), Golem HP 40->%d (-30, block cleared), 2 enemies defeated" % [
+			p_hp, golem_hp
+		]
+	)
+
+
+func _test_nuke_qte_failure(host_parent: Node) -> Dictionary:
+	Engine.time_scale = 4.0
+	var b: Node2D = await _spawn_isolated_battle(host_parent)
+	var p: Player = b.get_node("Player") as Player
+	var qte: CanvasLayer = b.get_node("UltimateCardQTE") as CanvasLayer
+
+	p.stats.health = 35
+	p.stats.block = 8
+
+	var captured_outcomes: Array[int] = []
+	var on_over := func(_txt: String, t: BattleOverPanel.Type) -> void:
+		captured_outcomes.append(int(t))
+	Events.battle_over_screen_requested.connect(on_over)
+
+	var card: Card = CARD_NUKE.duplicate()
+	var targets: Array[Node] = [p]
+	card.play(targets, p.stats)
+	await get_tree().process_frame
+
+	AIBattleAgent.inject_wasd_key(b, KEY_S)
+	AIBattleAgent.inject_wasd_key(b, KEY_W)
+	var prog_mid: int = int(qte.get("progress"))
+	AIBattleAgent.inject_wasd_key(b, KEY_D)
+	var prog_reset: int = int(qte.get("progress"))
+	var reset_ok: bool = prog_mid == 2 and prog_reset == 0 and bool(qte.get("active"))
+
+	var expired_ok: bool = await _wait_for_qte_timer_expiration(qte)
+	var waited: float = 0.0
+	while captured_outcomes.is_empty() and waited < 5.0:
+		waited += get_process_delta_time()
+		await get_tree().process_frame
+
+	if Events.battle_over_screen_requested.is_connected(on_over):
+		Events.battle_over_screen_requested.disconnect(on_over)
+
+	var lose_emitted: bool = not captured_outcomes.is_empty() and captured_outcomes[0] == int(BattleOverPanel.Type.LOSE)
+	var passed: bool = reset_ok and expired_ok and lose_emitted
+
+	await _cleanup_node(b)
+	return _make_qte_record(
+		"QTE-08",
+		"nuke_30_kill_streak",
+		"S W -> D(reset) -> Timeout",
+		"FAILURE",
+		reset_ok,
+		true,
+		passed,
+		"Progress %d->%d on wrong key D, timer expired -> Block cleared & lethal self-damage triggered LOSE=%s" % [
+			prog_mid, prog_reset, str(lose_emitted)
+		]
 	)

@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>slayTheStrat AI Test Report Dashboard</title>
+<title>slayTheStrat AI & WASD QTE Test Report</title>
 <style>
   body { font-family: system-ui, -apple-system, sans-serif; background: #0f111a; color: #e2e8f0; margin: 0; padding: 28px; }
   .wrap { max-width: 1120px; margin: 0 auto; }
@@ -23,16 +23,26 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>slayTheStrat — AI 机器人自动化测试报告</h1>
-  <div class="meta">生成时间: 2026-11-26T18:52:39 | 执行耗时: 140.75s | 引擎: Godot 4.7</div>
+  <h1>slayTheStrat — AI & Input-Driven WASD QTE Test Report</h1>
+  <div class="meta">Generated: 2026-11-26T21:19:25 | Duration: 119.48s | Godot 4.7</div>
   <div class="cards">
-    <div class="card"><div class="k">核心机制验证</div><div class="v">10 / 10</div></div>
-    <div class="card"><div class="k">模拟总场次</div><div class="v">60 场</div></div>
-    <div class="card"><div class="k">总体胜率 / 同归于尽</div><div class="v">70.0% / 2</div></div>
-    <div class="card"><div class="k">运行时不变式异常</div><div class="v">0</div></div>
+    <div class="card"><div class="k">Core & Export Checks</div><div class="v">11 / 11</div></div>
+    <div class="card"><div class="k">Ultimate QTE Matrix</div><div class="v">8 / 8</div></div>
+    <div class="card"><div class="k">AI Battles / Win Rate</div><div class="v">50 / 72.0%</div></div>
+    <div class="card"><div class="k">Invariant Errors</div><div class="v">0</div></div>
   </div>
-  <h2>1. 核心机制单元测试 (Functional Verification)</h2>
-  <table><thead><tr><th>ID</th><th>测试名称</th><th>结果</th><th>详情</th></tr></thead><tbody><tr><td><code>FT-01</code></td><td>StartScreen UI & Battle Scene Link</td><td><span class='ok'>PASS</span></td><td>StartScreen loaded title='Strategem-Spiral', float_y=19.0, target='res://scenes/battle/battle.tscn' exists=true</td></tr>
+  <h2>1. Ultimate Card WASD QTE Matrix (Success & Failure Paths)</h2>
+  <table><thead><tr><th>ID</th><th>Card</th><th>Path</th><th>Injected Sequence</th><th>Result</th><th>Details</th></tr></thead><tbody><tr><td><code>QTE-01</code></td><td><code>adda_swap_health</code></td><td><b>SUCCESS</b></td><td><code>A D D A D D</code></td><td><span class='ok'>PASS</span></td><td>WASD completed QTE once: Player HP 12->40 (expected 40), Enemies [20,10,10]->[4,4,4] (true)</td></tr>
+<tr><td><code>QTE-02</code></td><td><code>adda_swap_health</code></td><td><b>FAILURE</b></td><td><code>A D -> W(reset) -> Timeout</code></td><td><span class='ok'>PASS</span></td><td>Progress 2->0 on wrong key W, timer expired -> Enemies healed +5 ([20,4,4]->[25,9,9])</td></tr>
+<tr><td><code>QTE-03</code></td><td><code>wssws_blood_ritual</code></td><td><b>SUCCESS</b></td><td><code>W S -> D(reset) -> W S S W S</code></td><td><span class='ok'>PASS</span></td><td>Reset 2->0 then completed once: Player HP 18->36 (expected 36), bleed=7/turn</td></tr>
+<tr><td><code>QTE-04</code></td><td><code>wssws_blood_ritual</code></td><td><b>FAILURE</b></td><td><code>W -> A(reset) -> Timeout</code></td><td><span class='ok'>PASS</span></td><td>Progress 1->0 on wrong key A, timer expired -> Block 5->0, HP halved 21->11 (expected 11)</td></tr>
+<tr><td><code>QTE-05</code></td><td><code>last_gasp</code></td><td><b>SUCCESS</b></td><td><code>D S D S D S</code></td><td><span class='ok'>PASS</span></td><td>WASD completed QTE once: HP 30->5 (expected 5), damage_multiplier=3x (expected 3x)</td></tr>
+<tr><td><code>QTE-06</code></td><td><code>last_gasp</code></td><td><b>FAILURE</b></td><td><code>D S D -> W(reset) -> Timeout</code></td><td><span class='ok'>PASS</span></td><td>Progress 3->0 on wrong key W, timer expired -> HP 30->5 (5), damage_multiplier stayed 1x (no buff)</td></tr>
+<tr><td><code>QTE-07</code></td><td><code>nuke_30_kill_streak</code></td><td><b>SUCCESS</b></td><td><code>S W A S W D S W</code></td><td><span class='ok'>PASS</span></td><td>WASD completed Nuke once: Player HP 42->12 (-30), Golem HP 40->10 (-30, block cleared), 2 enemies defeated</td></tr>
+<tr><td><code>QTE-08</code></td><td><code>nuke_30_kill_streak</code></td><td><b>FAILURE</b></td><td><code>S W -> D(reset) -> Timeout</code></td><td><span class='ok'>PASS</span></td><td>Progress 2->0 on wrong key D, timer expired -> Block cleared & lethal self-damage triggered LOSE=true</td></tr>
+</tbody></table>
+  <h2>2. Core Mechanics & Release Isolation Checks</h2>
+  <table><thead><tr><th>ID</th><th>Check</th><th>Result</th><th>Details</th></tr></thead><tbody><tr><td><code>FT-01</code></td><td>StartScreen UI & Battle Scene Link</td><td><span class='ok'>PASS</span></td><td>StartScreen loaded title='Strategem-Spiral', float_y=19.0, target='res://scenes/battle/battle.tscn' exists=true</td></tr>
 <tr><td><code>FT-02</code></td><td>3-of-4 Randomized Enemy Pool (Ghost/Gob/Golem/Wolf)</td><td><span class='ok'>PASS</span></td><td>Observed distinct 3-enemy lineups across pool: ["Ghost", "Gob", "Golem", "Wolf"]</td></tr>
 <tr><td><code>FT-03</code></td><td>Warrior Block (+5) & Axe Attack (6 Dmg + Lunge)</td><td><span class='ok'>PASS</span></td><td>Block=5 (true), Target HP 10 -> 4 (true)</td></tr>
 <tr><td><code>FT-04</code></td><td>Mana Surge Next-Turn Overflow (3 -> 5 Mana)</td><td><span class='ok'>PASS</span></td><td>Next turn starting mana after 1x Mana Surge = 5 (expected 5)</td></tr>
@@ -41,30 +51,15 @@
 <tr><td><code>FT-07</code></td><td>Wolf Double-Bite (4x2 Dmg) & Lifesteal (+2x2 HP)</td><td><span class='ok'>PASS</span></td><td>Player HP 40->32 (expected 32), Wolf HP 5->9 (expected 9)</td></tr>
 <tr><td><code>FT-08</code></td><td>Ghost Conditional Mega-Block (<=6 HP -> +15 Block)</td><td><span class='ok'>PASS</span></td><td>Intent switched=true, Ghost block after action=15 (expected 15)</td></tr>
 <tr><td><code>FT-09</code></td><td>Gob Kamikaze Attack (14 Player Dmg + Self-Kill)</td><td><span class='ok'>PASS</span></td><td>Player HP 40->26 (-14), Gob self-destructed=true</td></tr>
-<tr><td><code>FT-10</code></td><td>Ultimate WASD QTE Input & Nuke OBLITERATED Outcome</td><td><span class='ok'>PASS</span></td><td>LastGasp WASD->3x mult (true), Nuke WASD->OBLITERATED (true)</td></tr>
+<tr><td><code>FT-10</code></td><td>Nuke Mutual Destruction -> OBLITERATED State</td><td><span class='ok'>PASS</span></td><td>Player (25 HP) & all enemies (10 HP) wiped via WASD Nuke -> OBLITERATED=true</td></tr>
+<tr><td><code>FT-11</code></td><td>AI Overlay Disabled in Normal Gameplay & Exported Builds</td><td><span class='ok'>PASS</span></td><td>NormalOff=true, ExportBlocked=true, ExplicitFlagOn=true, RuntimeTreeClean=true</td></tr>
 </tbody></table>
-  <h2>2. 多策略 AI 机器人基准测试 (Strategy Benchmarks)</h2>
-  <table><thead><tr><th>AI 策略</th><th>场次</th><th>胜</th><th>负</th><th>OBLITERATED</th><th>胜率</th><th>平均获胜回合</th><th>获胜剩余 HP</th></tr></thead><tbody><tr><td><code>Aggressive</code></td><td>12</td><td>10</td><td>1</td><td>1</td><td><b>83.3%</b></td><td>3.5</td><td>11.5 / 45</td></tr>
-<tr><td><code>Defensive</code></td><td>12</td><td>9</td><td>3</td><td>0</td><td><b>75.0%</b></td><td>3.7</td><td>15.4 / 45</td></tr>
-<tr><td><code>Human_Sim_70QTE</code></td><td>12</td><td>10</td><td>2</td><td>0</td><td><b>83.3%</b></td><td>5.3</td><td>9.3 / 45</td></tr>
-<tr><td><code>Random_Fuzz</code></td><td>12</td><td>2</td><td>9</td><td>1</td><td><b>16.7%</b></td><td>3.0</td><td>25.0 / 45</td></tr>
-<tr><td><code>Tactical_Pro</code></td><td>12</td><td>11</td><td>1</td><td>0</td><td><b>91.7%</b></td><td>5.5</td><td>12.5 / 45</td></tr>
-</tbody></table>
-  <h2>3. 随机敌人组合难度矩阵 (Encounter Balance)</h2>
-  <table><thead><tr><th>敌人阵容</th><th>场次</th><th>胜</th><th>负</th><th>OBLITERATED</th><th>胜率</th><th>平均回合</th><th>获胜剩余 HP</th></tr></thead><tbody><tr><td><code>Ghost + Gob + Golem</code></td><td>18</td><td>13</td><td>5</td><td>0</td><td><b>72.2%</b></td><td>4.4</td><td>12.4</td></tr>
-<tr><td><code>Ghost + Gob + Wolf</code></td><td>16</td><td>11</td><td>4</td><td>1</td><td><b>68.8%</b></td><td>3.6</td><td>13.2</td></tr>
-<tr><td><code>Ghost + Golem + Wolf</code></td><td>9</td><td>6</td><td>3</td><td>0</td><td><b>66.7%</b></td><td>6.1</td><td>14.2</td></tr>
-<tr><td><code>Gob + Golem + Wolf</code></td><td>17</td><td>12</td><td>4</td><td>1</td><td><b>70.6%</b></td><td>3.7</td><td>12.0</td></tr>
-</tbody></table>
-  <h2>4. 卡牌与终极技能 QTE 遥测 (Card Telemetry)</h2>
-  <table><thead><tr><th>卡牌 ID</th><th>抽到</th><th>打出</th><th>出牌率</th><th>打出胜率</th><th>QTE 统计</th></tr></thead><tbody><tr><td><code>adda_swap_health</code></td><td>41</td><td>15</td><td>36.6%</td><td>60.0%</td><td>15 (14 ok / 1 fail)</td></tr>
-<tr><td><code>last_gasp</code></td><td>36</td><td>10</td><td>27.8%</td><td>60.0%</td><td>10 (7 ok / 3 fail)</td></tr>
-<tr><td><code>mana_surge</code></td><td>160</td><td>75</td><td>46.9%</td><td>70.3%</td><td>-</td></tr>
-<tr><td><code>nuke_30_kill_streak</code></td><td>56</td><td>34</td><td>60.7%</td><td>67.6%</td><td>34 (26 ok / 8 fail)</td></tr>
-<tr><td><code>warrior_axe_attack</code></td><td>255</td><td>228</td><td>89.4%</td><td>76.9%</td><td>-</td></tr>
-<tr><td><code>warrior_block</code></td><td>195</td><td>116</td><td>59.5%</td><td>71.1%</td><td>-</td></tr>
-<tr><td><code>warrior_sweep</code></td><td>216</td><td>114</td><td>52.8%</td><td>74.5%</td><td>-</td></tr>
-<tr><td><code>wssws_blood_ritual</code></td><td>40</td><td>18</td><td>45.0%</td><td>77.8%</td><td>18 (16 ok / 2 fail)</td></tr>
+  <h2>3. Multi-Strategy AI Benchmarks</h2>
+  <table><thead><tr><th>Strategy</th><th>Matches</th><th>Wins</th><th>Losses</th><th>OBLITERATED</th><th>Win Rate</th><th>Avg Win Turns</th><th>Avg Win HP</th></tr></thead><tbody><tr><td><code>Aggressive</code></td><td>10</td><td>7</td><td>3</td><td>0</td><td><b>70.0%</b></td><td>5.3</td><td>18.9 / 45</td></tr>
+<tr><td><code>Defensive</code></td><td>10</td><td>9</td><td>1</td><td>0</td><td><b>90.0%</b></td><td>3.4</td><td>18.8 / 45</td></tr>
+<tr><td><code>Human_Sim_70QTE</code></td><td>10</td><td>9</td><td>1</td><td>0</td><td><b>90.0%</b></td><td>5.1</td><td>8.8 / 45</td></tr>
+<tr><td><code>Random_Fuzz</code></td><td>10</td><td>1</td><td>8</td><td>1</td><td><b>10.0%</b></td><td>3.0</td><td>1.0 / 45</td></tr>
+<tr><td><code>Tactical_Pro</code></td><td>10</td><td>10</td><td>0</td><td>0</td><td><b>100.0%</b></td><td>4.5</td><td>9.8 / 45</td></tr>
 </tbody></table>
 </div>
 </body>

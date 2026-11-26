@@ -21,6 +21,13 @@ jobs:
       - name: Install Godot and import the game
         run: bash .codex/setup.sh
 
+      - name: Run headless AI & WASD QTE test suite
+        shell: bash
+        run: |
+          GODOT="$HOME/.cache/sd5913-godot-4.7.2/godot"
+          "$GODOT" --headless --path "gameCode/slay-the-strat" \
+            res://ai_test_system/ai_test_runner.tscn -- --games-per-strategy=3 --speed=8.0 --auto-quit
+
       - name: Export Linux and Windows builds
         shell: bash
         run: |

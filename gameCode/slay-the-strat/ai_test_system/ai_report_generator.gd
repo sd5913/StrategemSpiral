@@ -4,6 +4,7 @@ extends RefCounted
 
 static func build_full_report(
 	functional_results: Array[Dictionary],
+	qte_matrix_results: Array[Dictionary],
 	match_records: Array[Dictionary],
 	elapsed_seconds: float
 ) -> Dictionary:
@@ -11,6 +12,11 @@ static func build_full_report(
 	for ft in functional_results:
 		if bool(ft.get("passed", false)):
 			ft_passed += 1
+
+	var qte_passed: int = 0
+	for qr in qte_matrix_results:
+		if bool(qr.get("passed", false)):
+			qte_passed += 1
 
 	var total_matches: int = match_records.size()
 	var total_wins: int = 0
@@ -44,7 +50,6 @@ static func build_full_report(
 		for err in inv_list:
 			all_invariant_errors.append("[Match #%d %s] %s" % [idx + 1, strat, str(err)])
 
-		# Aggregate by strategy
 		if not by_strategy.has(strat):
 			by_strategy[strat] = {
 				"matches": 0,
@@ -72,7 +77,6 @@ static func build_full_report(
 		else:
 			s_rec["losses"] = int(s_rec["losses"]) + 1
 
-		# Aggregate by enemy encounter composition
 		if not by_encounter.has(enc):
 			by_encounter[enc] = {
 				"matches": 0,
@@ -93,7 +97,6 @@ static func build_full_report(
 		else:
 			e_rec["losses"] = int(e_rec["losses"]) + 1
 
-		# Aggregate card telemetry
 		var drawn_map: Dictionary = m.get("cards_drawn_by_id", {})
 		for cid in drawn_map.keys():
 			_ensure_card_stat(card_stats, str(cid))
@@ -118,7 +121,6 @@ static func build_full_report(
 			card_stats[key]["qte_successes"] = int(card_stats[key]["qte_successes"]) + int(q.get("successes", 0))
 			card_stats[key]["qte_failures"] = int(card_stats[key]["qte_failures"]) + int(q.get("failures", 0))
 
-	# Finalize derived percentages
 	var strategy_summary: Dictionary = {}
 	for strat in by_strategy.keys():
 		var sr: Dictionary = by_strategy[strat]
@@ -174,37 +176,25 @@ static func build_full_report(
 			"id": "BUG-01",
 			"severity": "HIGH (Fixed in Branch)",
 			"location": "global/shaker.gd:shake()",
-			"description": "Shaker.shake() previously bound tweens to the Shaker autoload without checking is_instance_valid(thing) on completion. Killing an enemy during a 2.0s Ultimate shake (e.g. adda_swap_health followed by Axe Attack) triggered freed-object errors. Fixed by binding shake tween to thing.create_tween() with validity guards."
+			"description": "Shaker.shake() previously bound tweens to the Shaker autoload without checking is_instance_valid(thing) on completion. Fixed by binding shake tween to thing.create_tween() with validity guards."
 		},
 		{
 			"id": "BUG-02",
 			"severity": "HIGH (Fixed in Branch)",
 			"location": "global/shaker.gd:shake_loop()",
-			"description": "Shaker.shake_loop() (triggered by Last Gasp Ultimate) created an infinite set_loops() tween on the global Shaker autoload instead of thing.create_tween(). When Player was freed on scene reload or battle cleanup without battle_over_screen_requested, Godot spammed 'Lambda capture at index 0 was freed' at 20Hz indefinitely. Fixed by binding shake_loop to thing.create_tween().set_loops()."
+			"description": "Shaker.shake_loop() created an infinite set_loops() tween on the global Shaker autoload instead of thing.create_tween(), causing freed lambda errors on cleanup. Fixed by binding shake_loop to thing.create_tween().set_loops()."
 		},
 		{
 			"id": "BUG-03",
 			"severity": "CRITICAL (Fixed in Branch)",
 			"location": "scenes/ui/battle_ui.gd:_ready()",
-			"description": "EndTurnButton started enabled (disabled=false) during the initial 1.0s opening hand draw animation. Clicking End Turn during the opening draw launched Enemy Turn #1 concurrently with Player Turn #1, causing double signal connections on Golem actions, freed-card discard errors, and state race conditions. Fixed by initializing end_turn_button.disabled = true until player_hand_drawn."
+			"description": "EndTurnButton started enabled during the initial 1.0s opening hand draw animation, allowing concurrent turns. Fixed by disabling EndTurnButton until player_hand_drawn and during nuclear cutscene resolution."
 		},
 		{
 			"id": "BUG-04",
 			"severity": "MEDIUM (Fixed in Branch)",
 			"location": "characters/warrior/cards/warrior_nuke.gd:_play_nuclear_cutscene()",
-			"description": "Nuclear whiteout and fade tweens were bound to Player instead of Arena, risking an unresolving await if Player node was freed mid-cutscene (leaving battle_over_resolution_in_progress stuck true). Fixed by binding cutscene tweens to Arena."
-		},
-		{
-			"id": "NOTE-01",
-			"severity": "DESIGN / INFO",
-			"location": "scenes/battle/battle.gd:_shuffle_enemy_types()",
-			"description": "Enemy nodes keep static scene names (GhostEnemy, GobEnemy, GolemEnemy) when EnemyStats are shuffled across the 4-enemy pool (including Wolf). Tools and future UI scripts must inspect enemy.stats.ai rather than node.name."
-		},
-		{
-			"id": "NOTE-02",
-			"severity": "BALANCE / INFO",
-			"location": "characters/warrior/cards/warrior_blood_ritual.gd",
-			"description": "Stats.set_health() clamps health to max_health (45). Playing Blood Ritual above 23 HP caps healing at 45 while still applying -7 HP/turn bleed, making it a high-skill situational comeback card."
+			"description": "Nuclear whiteout and fade tweens were bound to Player instead of Arena. Fixed by binding cutscene tweens to Arena."
 		}
 	]
 
@@ -217,6 +207,13 @@ static func build_full_report(
 			"passed": ft_passed,
 			"failed": functional_results.size() - ft_passed,
 			"results": functional_results
+		},
+		"ultimate_qte_verification": {
+			"total": qte_matrix_results.size(),
+			"passed": qte_passed,
+			"failed": qte_matrix_results.size() - qte_passed,
+			"input_method": "InputEventKey via Input.parse_input_event + Input.flush_buffered_events (zero direct callback invocations)",
+			"results": qte_matrix_results
 		},
 		"simulation_overview": {
 			"total_matches": total_matches,
@@ -271,23 +268,41 @@ static func save_reports(report: Dictionary, json_path: String, md_path: String,
 
 static func _render_markdown(report: Dictionary) -> String:
 	var ft: Dictionary = report["functional_suite"]
+	var qm: Dictionary = report["ultimate_qte_verification"]
 	var sim: Dictionary = report["simulation_overview"]
 	var md: String = ""
 
-	md += "# 🤖 slayTheStrat AI 机器人自动化测试与平衡性分析报告\n\n"
+	md += "# 🤖 slayTheStrat AI 机器人与输入驱动 QTE 自动化测试报告\n\n"
 	md += "- **测试项目**: `%s`\n" % str(report["project"])
 	md += "- **生成时间**: `%s`\n" % str(report["generated_at"])
 	md += "- **总执行耗时**: `%.2f 秒`\n" % float(report["duration_seconds"])
-	md += "- **核心机制单元测试通过率**: **%d / %d** (`%.0f%%`)\n" % [
+	md += "- **核心机制与导出门控检查**: **%d / %d** (`%.0f%%`)\n" % [
 		int(ft["passed"]), int(ft["total"]),
 		float(ft["passed"]) / float(maxi(1, int(ft["total"]))) * 100.0
+	]
+	md += "- **终极卡 WASD QTE 成功/失败双路径检查**: **%d / %d** (`%.0f%%`，纯 `InputEventKey` 输入注入，零直接回调调用)\n" % [
+		int(qm["passed"]), int(qm["total"]),
+		float(qm["passed"]) / float(maxi(1, int(qm["total"]))) * 100.0
 	]
 	md += "- **AI 模拟对战总局数**: **%d 局**（胜率 **%.1f%%**，同归于尽 `OBLITERATED` **%d 局**，运行时不变式异常 **%d 项**）\n\n" % [
 		int(sim["total_matches"]), float(sim["overall_win_rate_pct"]),
 		int(sim["obliterated"]), int(sim["invariant_errors_count"])
 	]
 
-	md += "## 1. 核心机制确定性验证 (Functional Mechanics Verification)\n\n"
+	md += "## 1. 终极卡牌 WASD QTE 成功与失败全路径验证 (Ultimate Card QTE Matrix)\n\n"
+	md += "| 编号 | 终极卡 ID | 路径类型 | 注入按键序列 / 触发方式 | 错误键重置校验 | 单次生效校验 | 状态 | 详细验证结果 |\n"
+	md += "| :--- | :--- | :---: | :--- | :---: | :---: | :---: | :--- |\n"
+	var qm_list: Array = qm["results"]
+	for qitem in qm_list:
+		var q_status: String = "PASS" if bool(qitem["passed"]) else "FAIL"
+		var rst_str: String = "YES" if bool(qitem["wrong_key_reset_verified"]) else "-"
+		var once_str: String = "YES" if bool(qitem["single_effect_verified"]) else "-"
+		md += "| `%s` | `%s` | **%s** | `%s` | %s | %s | **%s** | %s |\n" % [
+			str(qitem["id"]), str(qitem["card_id"]), str(qitem["path"]),
+			str(qitem["sequence"]), rst_str, once_str, q_status, str(qitem["details"])
+		]
+
+	md += "\n## 2. 核心机制与发布版隔离确定性验证 (Functional & Release Gating Checks)\n\n"
 	md += "| 编号 | 测试项 | 状态 | 详细验证结果 |\n"
 	md += "| :--- | :--- | :---: | :--- |\n"
 	var ft_list: Array = ft["results"]
@@ -297,7 +312,7 @@ static func _render_markdown(report: Dictionary) -> String:
 			str(item["id"]), str(item["title"]), status_str, str(item["details"])
 		]
 
-	md += "\n## 2. 多人格 AI 策略对战统计 (Multi-Strategy AI Benchmarks)\n\n"
+	md += "\n## 3. 多人格 AI 策略对战统计 (Multi-Strategy AI Benchmarks)\n\n"
 	md += "| AI 策略人格 | 对局数 | 胜场 (WIN) | 败场 (LOSE) | 同归于尽 (OBLITERATED) | 胜率 | 获胜平均回合 | 获胜平均剩余 HP |\n"
 	md += "| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |\n"
 	var strat_map: Dictionary = report["strategy_breakdown"]
@@ -310,7 +325,7 @@ static func _render_markdown(report: Dictionary) -> String:
 			float(s["win_rate_pct"]), float(s["avg_win_turns"]), float(s["avg_win_hp"])
 		]
 
-	md += "\n## 3. 随机敌人阵容难度矩阵 (3-of-4 Enemy Encounter Balance)\n\n"
+	md += "\n## 4. 随机敌人阵容难度矩阵 (3-of-4 Enemy Encounter Balance)\n\n"
 	md += "| 敌人组合 (Encounter Lineup) | 出现次数 | 玩家胜场 | 玩家败场 | 同归于尽 | 玩家胜率 | 平均回合数 | 获胜剩余 HP |\n"
 	md += "| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |\n"
 	var enc_map: Dictionary = report["encounter_breakdown"]
@@ -323,7 +338,7 @@ static func _render_markdown(report: Dictionary) -> String:
 			float(e["win_rate_pct"]), float(e["avg_turns"]), float(e["avg_win_hp"])
 		]
 
-	md += "\n## 4. 全卡牌抽用与 QTE 表现遥测 (Card & Ultimate QTE Telemetry)\n\n"
+	md += "\n## 5. 全卡牌抽用与 QTE 表现遥测 (Card & Ultimate QTE Telemetry)\n\n"
 	md += "| 卡牌 ID | 抽到次数 | 打出次数 | 出牌转化率 | 参战局胜率 | QTE 触发 | QTE 成功 / 失败 |\n"
 	md += "| :--- | :---: | :---: | :---: | :---: | :---: | :---: |\n"
 	var card_map: Dictionary = report["card_telemetry"]
@@ -340,7 +355,7 @@ static func _render_markdown(report: Dictionary) -> String:
 			int(c["qte_attempts"]), qte_col
 		]
 
-	md += "\n## 5. 代码审计与缺陷发现记录 (Code Audit & Bug Report)\n\n"
+	md += "\n## 6. 代码审计与缺陷修复记录 (Code Audit & Bug Report)\n\n"
 	var findings: Array = report["code_audit_findings"]
 	for f in findings:
 		md += "- **[%s] (%s)** `%s`: %s\n" % [
@@ -349,12 +364,12 @@ static func _render_markdown(report: Dictionary) -> String:
 
 	var inv_errs: Array = sim["invariant_errors"]
 	if not inv_errs.is_empty():
-		md += "\n## 6. 运行时不变式告警\n\n"
+		md += "\n## 7. 运行时不变式告警\n\n"
 		for err in inv_errs:
 			md += "- %s\n" % str(err)
 	else:
-		md += "\n> **运行时稳定性结论**：全部 %d 场对局与 %d 项核心机制验证均完成闭环，零死锁、零负法力值、零越界生命值、零释放对象崩溃。\n" % [
-			int(sim["total_matches"]), int(ft["total"])
+		md += "\n> **运行时稳定性结论**：全部 %d 场对局、%d 项终极卡 WASD QTE 路径及 %d 项核心机制验证均完成闭环，零死锁、零负法力值、零越界生命值、零释放对象崩溃。\n" % [
+			int(sim["total_matches"]), int(qm["total"]), int(ft["total"])
 		]
 
 	return md
@@ -362,7 +377,16 @@ static func _render_markdown(report: Dictionary) -> String:
 
 static func _render_html(report: Dictionary) -> String:
 	var ft: Dictionary = report["functional_suite"]
+	var qm: Dictionary = report["ultimate_qte_verification"]
 	var sim: Dictionary = report["simulation_overview"]
+
+	var qm_rows: String = ""
+	for qitem in qm["results"]:
+		var badge: String = "<span class='ok'>PASS</span>" if bool(qitem["passed"]) else "<span class='fail'>FAIL</span>"
+		qm_rows += "<tr><td><code>%s</code></td><td><code>%s</code></td><td><b>%s</b></td><td><code>%s</code></td><td>%s</td><td>%s</td></tr>\n" % [
+			str(qitem["id"]), str(qitem["card_id"]), str(qitem["path"]),
+			str(qitem["sequence"]), badge, str(qitem["details"])
+		]
 
 	var ft_rows: String = ""
 	for item in ft["results"]:
@@ -382,34 +406,11 @@ static func _render_html(report: Dictionary) -> String:
 			float(s["win_rate_pct"]), float(s["avg_win_turns"]), float(s["avg_win_hp"])
 		]
 
-	var enc_rows: String = ""
-	var enc_map: Dictionary = report["encounter_breakdown"]
-	var enc_keys: Array = enc_map.keys()
-	enc_keys.sort()
-	for ek in enc_keys:
-		var e: Dictionary = enc_map[ek]
-		enc_rows += "<tr><td><code>%s</code></td><td>%d</td><td>%d</td><td>%d</td><td>%d</td><td><b>%.1f%%</b></td><td>%.1f</td><td>%.1f</td></tr>\n" % [
-			str(ek), int(e["matches"]), int(e["wins"]), int(e["losses"]), int(e["obliterated"]),
-			float(e["win_rate_pct"]), float(e["avg_turns"]), float(e["avg_win_hp"])
-		]
-
-	var card_rows: String = ""
-	var card_map: Dictionary = report["card_telemetry"]
-	var card_keys: Array = card_map.keys()
-	card_keys.sort()
-	for ck in card_keys:
-		var c: Dictionary = card_map[ck]
-		var qte_str: String = "-" if int(c["qte_attempts"]) == 0 else ("%d (%d ok / %d fail)" % [int(c["qte_attempts"]), int(c["qte_successes"]), int(c["qte_failures"])])
-		card_rows += "<tr><td><code>%s</code></td><td>%d</td><td>%d</td><td>%.1f%%</td><td>%.1f%%</td><td>%s</td></tr>\n" % [
-			str(ck), int(c["drawn"]), int(c["played"]),
-			float(c["play_rate_when_drawn_pct"]), float(c["win_rate_when_played_pct"]), qte_str
-		]
-
 	var html: String = """<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>slayTheStrat AI Test Report Dashboard</title>
+<title>slayTheStrat AI & WASD QTE Test Report</title>
 <style>
   body { font-family: system-ui, -apple-system, sans-serif; background: #0f111a; color: #e2e8f0; margin: 0; padding: 28px; }
   .wrap { max-width: 1120px; margin: 0 auto; }
@@ -430,22 +431,20 @@ static func _render_html(report: Dictionary) -> String:
 </head>
 <body>
 <div class="wrap">
-  <h1>slayTheStrat — AI 机器人自动化测试报告</h1>
-  <div class="meta">生成时间: %s | 执行耗时: %.2fs | 引擎: Godot 4.7</div>
+  <h1>slayTheStrat — AI & Input-Driven WASD QTE Test Report</h1>
+  <div class="meta">Generated: %s | Duration: %.2fs | Godot 4.7</div>
   <div class="cards">
-    <div class="card"><div class="k">核心机制验证</div><div class="v">%d / %d</div></div>
-    <div class="card"><div class="k">模拟总场次</div><div class="v">%d 场</div></div>
-    <div class="card"><div class="k">总体胜率 / 同归于尽</div><div class="v">%.1f%% / %d</div></div>
-    <div class="card"><div class="k">运行时不变式异常</div><div class="v">%d</div></div>
+    <div class="card"><div class="k">Core & Export Checks</div><div class="v">%d / %d</div></div>
+    <div class="card"><div class="k">Ultimate QTE Matrix</div><div class="v">%d / %d</div></div>
+    <div class="card"><div class="k">AI Battles / Win Rate</div><div class="v">%d / %.1f%%</div></div>
+    <div class="card"><div class="k">Invariant Errors</div><div class="v">%d</div></div>
   </div>
-  <h2>1. 核心机制单元测试 (Functional Verification)</h2>
-  <table><thead><tr><th>ID</th><th>测试名称</th><th>结果</th><th>详情</th></tr></thead><tbody>%s</tbody></table>
-  <h2>2. 多策略 AI 机器人基准测试 (Strategy Benchmarks)</h2>
-  <table><thead><tr><th>AI 策略</th><th>场次</th><th>胜</th><th>负</th><th>OBLITERATED</th><th>胜率</th><th>平均获胜回合</th><th>获胜剩余 HP</th></tr></thead><tbody>%s</tbody></table>
-  <h2>3. 随机敌人组合难度矩阵 (Encounter Balance)</h2>
-  <table><thead><tr><th>敌人阵容</th><th>场次</th><th>胜</th><th>负</th><th>OBLITERATED</th><th>胜率</th><th>平均回合</th><th>获胜剩余 HP</th></tr></thead><tbody>%s</tbody></table>
-  <h2>4. 卡牌与终极技能 QTE 遥测 (Card Telemetry)</h2>
-  <table><thead><tr><th>卡牌 ID</th><th>抽到</th><th>打出</th><th>出牌率</th><th>打出胜率</th><th>QTE 统计</th></tr></thead><tbody>%s</tbody></table>
+  <h2>1. Ultimate Card WASD QTE Matrix (Success & Failure Paths)</h2>
+  <table><thead><tr><th>ID</th><th>Card</th><th>Path</th><th>Injected Sequence</th><th>Result</th><th>Details</th></tr></thead><tbody>%s</tbody></table>
+  <h2>2. Core Mechanics & Release Isolation Checks</h2>
+  <table><thead><tr><th>ID</th><th>Check</th><th>Result</th><th>Details</th></tr></thead><tbody>%s</tbody></table>
+  <h2>3. Multi-Strategy AI Benchmarks</h2>
+  <table><thead><tr><th>Strategy</th><th>Matches</th><th>Wins</th><th>Losses</th><th>OBLITERATED</th><th>Win Rate</th><th>Avg Win Turns</th><th>Avg Win HP</th></tr></thead><tbody>%s</tbody></table>
 </div>
 </body>
 </html>
@@ -453,12 +452,11 @@ static func _render_html(report: Dictionary) -> String:
 		str(report["generated_at"]),
 		float(report["duration_seconds"]),
 		int(ft["passed"]), int(ft["total"]),
-		int(sim["total_matches"]),
-		float(sim["overall_win_rate_pct"]), int(sim["obliterated"]),
+		int(qm["passed"]), int(qm["total"]),
+		int(sim["total_matches"]), float(sim["overall_win_rate_pct"]),
 		int(sim["invariant_errors_count"]),
+		qm_rows,
 		ft_rows,
-		strat_rows,
-		enc_rows,
-		card_rows
+		strat_rows
 	]
 	return html

@@ -4,8 +4,16 @@ extends Node
 signal match_completed(summary: Dictionary)
 signal agent_status_updated(status_text: String)
 
+enum QTEMode {
+	STRATEGY_DEFAULT,
+	INPUT_DRIVEN_SUCCESS,
+	INPUT_DRIVEN_MISTAKE_RECOVERY,
+	INPUT_DRIVEN_TIMEOUT_FAILURE
+}
+
 var battle: Node2D
 var strategy: AIBotBrain.Strategy = AIBotBrain.Strategy.TACTICAL_PRO
+var qte_mode: QTEMode = QTEMode.STRATEGY_DEFAULT
 var qte_accuracy: float = 1.0
 var action_delay: float = 0.0
 var enabled: bool = true
@@ -25,20 +33,83 @@ var invariant_errors: Array[String] = []
 var action_trace: Array[String] = []
 
 var _is_acting: bool = false
-var _qte_handling: bool = false
+var _qte_in_progress: bool = false
 var _battle_done: bool = false
 var _elapsed_virtual_time: float = 0.0
 var _turn_idle_watchdog: float = 0.0
+var _last_ultimate_card_id: String = "ultimate_unknown"
+
+
+static func get_qte_mode_name(mode: QTEMode) -> String:
+	match mode:
+		QTEMode.STRATEGY_DEFAULT:
+			return "Strategy_Input_Driven"
+		QTEMode.INPUT_DRIVEN_SUCCESS:
+			return "Input_Driven_Success"
+		QTEMode.INPUT_DRIVEN_MISTAKE_RECOVERY:
+			return "Input_Driven_Mistake_Recovery"
+		QTEMode.INPUT_DRIVEN_TIMEOUT_FAILURE:
+			return "Input_Driven_Timeout_Failure"
+	return "Unknown"
+
+
+static func direction_to_keycode(direction: String) -> Key:
+	match direction:
+		"up":
+			return KEY_W
+		"down":
+			return KEY_S
+		"left":
+			return KEY_A
+		"right":
+			return KEY_D
+	return KEY_W
+
+
+static func pick_wrong_direction(expected_direction: String) -> String:
+	match expected_direction:
+		"up":
+			return "down"
+		"down":
+			return "up"
+		"left":
+			return "right"
+		"right":
+			return "left"
+	return "up"
+
+
+static func inject_wasd_key(tree_or_node: Node, keycode: Key) -> void:
+	if not is_instance_valid(tree_or_node) or not tree_or_node.is_inside_tree():
+		return
+
+	var press := InputEventKey.new()
+	press.keycode = keycode
+	press.physical_keycode = keycode
+	press.pressed = true
+	press.echo = false
+	Input.parse_input_event(press)
+	Input.flush_buffered_events()
+
+	var release := InputEventKey.new()
+	release.keycode = keycode
+	release.physical_keycode = keycode
+	release.pressed = false
+	release.echo = false
+	Input.parse_input_event(release)
+	Input.flush_buffered_events()
 
 
 func setup(
 	battle_node: Node2D,
 	bot_strategy: AIBotBrain.Strategy,
 	custom_qte_accuracy: float = -1.0,
-	step_delay: float = 0.0
+	step_delay: float = 0.0,
+	mode: QTEMode = QTEMode.STRATEGY_DEFAULT
 ) -> void:
 	battle = battle_node
 	strategy = bot_strategy
+	qte_mode = mode
 	qte_accuracy = custom_qte_accuracy if custom_qte_accuracy >= 0.0 else AIBotBrain.get_default_qte_accuracy(bot_strategy)
 	action_delay = step_delay
 
@@ -54,7 +125,6 @@ func _ready() -> void:
 	Events.ultimate_card_qte_started.connect(_on_ultimate_qte_started)
 	Events.battle_over_screen_requested.connect(_on_battle_over_screen_requested)
 
-	# Capture initial enemy lineup once battle _ready has populated stats
 	call_deferred("_capture_initial_lineup")
 
 
@@ -86,7 +156,7 @@ func _capture_initial_lineup() -> void:
 	sorted_names.sort()
 	encounter_signature = " + ".join(sorted_names)
 
-	# Check if hand was already drawn before agent attached (e.g. toggled ON mid-battle via HUD)
+	# Check if hand was already drawn before agent attached (e.g. toggled ON mid-battle via overlay)
 	var battle_ui: BattleUI = battle.get_node_or_null("BattleUI") as BattleUI
 	var hand_node: Hand = _get_hand()
 	if enabled and turn_number == 0 and battle_ui and battle_ui.end_turn_button and not battle_ui.end_turn_button.disabled and hand_node and hand_node.get_child_count() > 0:
@@ -103,9 +173,8 @@ func _process(delta: float) -> void:
 		_finalize_match("TIMEOUT")
 		return
 
-	# Watchdog if player turn is ready (EndTurnButton enabled) and bot isn't acting
 	var battle_ui: BattleUI = battle.get_node_or_null("BattleUI") as BattleUI
-	if battle_ui and battle_ui.end_turn_button and not battle_ui.end_turn_button.disabled and not _is_acting and not _qte_handling:
+	if battle_ui and battle_ui.end_turn_button and not battle_ui.end_turn_button.disabled and not _is_acting and not _is_qte_or_cutscene_busy():
 		_turn_idle_watchdog += delta
 		if _turn_idle_watchdog > 1.5:
 			_turn_idle_watchdog = 0.0
@@ -114,13 +183,25 @@ func _process(delta: float) -> void:
 		_turn_idle_watchdog = 0.0
 
 
+func _is_qte_or_cutscene_busy() -> bool:
+	if _qte_in_progress:
+		return true
+	if not is_instance_valid(battle):
+		return false
+	var qte_layer: CanvasLayer = battle.get_node_or_null("UltimateCardQTE") as CanvasLayer
+	if qte_layer and bool(qte_layer.get("active")):
+		return true
+	if bool(battle.get("battle_over_resolution_in_progress")):
+		return true
+	return false
+
+
 func _on_player_hand_drawn() -> void:
 	if _battle_done:
 		return
 	turn_number += 1
 	_turn_idle_watchdog = 0.0
 
-	# Record drawn hand cards & verify max-1-ultimate invariant
 	var hand: Hand = _get_hand()
 	if hand:
 		var ult_in_hand: int = 0
@@ -154,7 +235,13 @@ func _execute_turn_loop() -> void:
 
 	var safety_plays_this_turn: int = 0
 	while enabled and not _battle_done and is_instance_valid(battle):
-		if bool(battle.get("battle_over_requested")) or bool(battle.get("battle_over_resolution_in_progress")) or get_tree().paused:
+		# Strictly wait if any QTE or post-QTE resolution cutscene is active before selecting another action
+		if _is_qte_or_cutscene_busy():
+			await _wait_until_qte_and_resolution_settled()
+
+		if _battle_done or not enabled or not is_instance_valid(battle):
+			break
+		if bool(battle.get("battle_over_requested")) or get_tree().paused:
 			break
 
 		var player: Player = _get_player()
@@ -171,14 +258,18 @@ func _execute_turn_loop() -> void:
 			if _battle_done or not enabled or not is_instance_valid(battle):
 				break
 
-		# Wait if QTE is currently active
-		var qte_layer: CanvasLayer = battle.get_node_or_null("UltimateCardQTE") as CanvasLayer
-		while qte_layer and bool(qte_layer.get("active")) and not _battle_done:
-			await get_tree().process_frame
+		if _is_qte_or_cutscene_busy():
+			await _wait_until_qte_and_resolution_settled()
 
 		enemies = _get_living_enemies()
 		if enemies.is_empty() or _battle_done or bool(battle.get("battle_over_requested")):
 			break
+
+		var qte_layer: CanvasLayer = battle.get_node_or_null("UltimateCardQTE") as CanvasLayer
+		if qte_layer and bool(qte_layer.get("active")):
+			_record_invariant("Bot attempted to choose action while UltimateCardQTE was still active.")
+			await _wait_until_qte_and_resolution_settled()
+			continue
 
 		var decision: AIBotBrain.Decision = AIBotBrain.choose_next_action(strategy, player, hand, enemies)
 		if decision.action == "END_TURN" or not is_instance_valid(decision.card_ui):
@@ -199,10 +290,12 @@ func _execute_turn_loop() -> void:
 		var is_attack: bool = chosen_card.type == Card.Type.ATTACK and not is_ult
 		var card_id: String = chosen_card.id
 
+		if is_ult:
+			_last_ultimate_card_id = card_id
+
 		agent_status_updated.emit("[T%d] Play %s (%s)" % [turn_number, card_id, decision.reason])
 		action_trace.append("T%d: PLAY %s -> %s" % [turn_number, card_id, decision.reason])
 
-		# Populate targets accurately to match CardUI drag/aim behavior
 		chosen_ui.targets.clear()
 		if chosen_card.is_single_targeted():
 			if is_instance_valid(decision.target_enemy):
@@ -218,9 +311,9 @@ func _execute_turn_loop() -> void:
 
 		chosen_ui.play()
 
-		# Wait appropriately for animations, QTE input, or cutscenes to settle
+		# Strictly wait for QTE resolution (or attack animation) before considering next action
 		if is_ult:
-			await _wait_for_qte_and_cutscene()
+			await _wait_until_qte_and_resolution_settled()
 		elif is_attack:
 			await get_tree().create_timer(0.58).timeout
 		else:
@@ -231,17 +324,10 @@ func _execute_turn_loop() -> void:
 	_is_acting = false
 
 
-func _wait_for_qte_and_cutscene() -> void:
-	if not is_instance_valid(battle):
-		return
-	var qte_layer: CanvasLayer = battle.get_node_or_null("UltimateCardQTE") as CanvasLayer
-	var qte_wait_start: int = Time.get_ticks_msec()
-	while qte_layer and bool(qte_layer.get("active")) and not _battle_done and (Time.get_ticks_msec() - qte_wait_start) < 5000:
-		await get_tree().process_frame
-
-	# Wait if Nuke cutscene (battle_over_resolution_in_progress, ~4.8s virtual time) is running
-	var cutscene_wait_start: int = Time.get_ticks_msec()
-	while is_instance_valid(battle) and bool(battle.get("battle_over_resolution_in_progress")) and not _battle_done and (Time.get_ticks_msec() - cutscene_wait_start) < 8000:
+func _wait_until_qte_and_resolution_settled() -> void:
+	var waited_virtual: float = 0.0
+	while is_inside_tree() and not _battle_done and _is_qte_or_cutscene_busy() and waited_virtual < 40.0:
+		waited_virtual += get_process_delta_time()
 		await get_tree().process_frame
 
 	if not _battle_done and is_inside_tree():
@@ -249,103 +335,103 @@ func _wait_for_qte_and_cutscene() -> void:
 
 
 func _on_ultimate_qte_started(sequence: Array[String], _success: Callable, _failure: Callable) -> void:
-	if not enabled or _battle_done or _qte_handling:
+	if not enabled or _battle_done or _qte_in_progress:
 		return
-	_qte_handling = true
-	_perform_qte_inputs(sequence)
+	_qte_in_progress = true
+	_drive_qte_via_godot_input(sequence)
 
 
-func _perform_qte_inputs(sequence: Array[String]) -> void:
-	var will_succeed: bool = randf() <= qte_accuracy
+func _drive_qte_via_godot_input(sequence: Array[String]) -> void:
 	var qte_layer: CanvasLayer = battle.get_node_or_null("UltimateCardQTE") as CanvasLayer if is_instance_valid(battle) else null
+	if not qte_layer:
+		_qte_in_progress = false
+		return
 
-	# Temporarily moderate Engine.time_scale if running ultra-fast so QTE 2.0s timer never races frame spikes
+	var should_succeed: bool = true
+	var inject_mistake_first: bool = false
+
+	match qte_mode:
+		QTEMode.INPUT_DRIVEN_SUCCESS:
+			should_succeed = true
+			inject_mistake_first = false
+		QTEMode.INPUT_DRIVEN_MISTAKE_RECOVERY:
+			should_succeed = true
+			inject_mistake_first = true
+		QTEMode.INPUT_DRIVEN_TIMEOUT_FAILURE:
+			should_succeed = false
+			inject_mistake_first = true
+		QTEMode.STRATEGY_DEFAULT:
+			should_succeed = randf() <= qte_accuracy
+			inject_mistake_first = not should_succeed
+
+	# Keep virtual time_scale moderate while feeding per-frame InputEventKey events so 2.0s QTE timer behaves deterministically
 	var saved_scale: float = Engine.time_scale
 	var restore_scale: bool = false
-	if will_succeed and saved_scale > 6.0:
-		Engine.time_scale = 5.0
+	if should_succeed and saved_scale > 5.0:
+		Engine.time_scale = 4.0
 		restore_scale = true
 
 	await get_tree().process_frame
 
-	if will_succeed:
+	if should_succeed:
+		if inject_mistake_first and not sequence.is_empty() and bool(qte_layer.get("active")):
+			# Inject 1 valid key then 1 wrong key to exercise sequence progress reset -> 0
+			inject_wasd_key(self, direction_to_keycode(sequence[0]))
+			await get_tree().process_frame
+			var wrong_dir: String = pick_wrong_direction(sequence[mini(1, sequence.size() - 1)])
+			inject_wasd_key(self, direction_to_keycode(wrong_dir))
+			await get_tree().process_frame
+
+		var completed_via_keys: bool = false
 		for dir_name in sequence:
-			if not qte_layer or not bool(qte_layer.get("active")) or _battle_done:
+			if not is_instance_valid(qte_layer) or not bool(qte_layer.get("active")) or _battle_done:
 				break
-			_send_qte_key(_direction_to_keycode(dir_name))
+			inject_wasd_key(self, direction_to_keycode(dir_name))
+			if not bool(qte_layer.get("active")):
+				completed_via_keys = true
+				break
 			if action_delay > 0.0:
 				await get_tree().create_timer(minf(action_delay * 0.35, 0.12), true, false, true).timeout
 			else:
 				await get_tree().process_frame
-		_record_last_qte_result(true)
+			if is_instance_valid(qte_layer) and not bool(qte_layer.get("active")):
+				completed_via_keys = true
+				break
+
+		_record_qte_outcome(completed_via_keys)
 	else:
-		# Simulate mistake + timeout failure to exercise QTE failure penalty paths!
-		if not sequence.is_empty() and qte_layer and bool(qte_layer.get("active")):
-			var wrong_dir: String = "up" if sequence[0] != "up" else "down"
-			_send_qte_key(_direction_to_keycode(wrong_dir))
-		if qte_layer and bool(qte_layer.get("active")) and qte_layer.has_method("_resolve"):
-			# If in fast headless mode, let timer expire naturally or wait until elapsed >= DURATION
-			while qte_layer and bool(qte_layer.get("active")) and not _battle_done:
-				await get_tree().process_frame
-		_record_last_qte_result(false)
+		# Inject partial valid key followed by wrong key (resets progress to 0),
+		# then wait for UltimateCardQTE's own _process(delta) timer (2.0s) to expire naturally.
+		if not sequence.is_empty() and bool(qte_layer.get("active")):
+			inject_wasd_key(self, direction_to_keycode(sequence[0]))
+			await get_tree().process_frame
+			if is_instance_valid(qte_layer) and bool(qte_layer.get("active")):
+				var wrong_dir: String = pick_wrong_direction(sequence[mini(1, sequence.size() - 1)])
+				inject_wasd_key(self, direction_to_keycode(wrong_dir))
+
+		var timeout_guard: float = 0.0
+		while is_instance_valid(qte_layer) and bool(qte_layer.get("active")) and not _battle_done and timeout_guard < 10.0:
+			timeout_guard += get_process_delta_time()
+			await get_tree().process_frame
+
+		_record_qte_outcome(false)
 
 	if restore_scale and not _battle_done:
 		Engine.time_scale = saved_scale
 
-	_qte_handling = false
+	_qte_in_progress = false
 
 
-func _record_last_qte_result(succeeded: bool) -> void:
-	# Attribute QTE outcome to most recently played ultimate card
-	var last_ult: String = "ultimate_unknown"
-	for i in range(action_trace.size() - 1, -1, -1):
-		var entry: String = action_trace[i]
-		for ult_id in ["adda_swap_health", "wssws_blood_ritual", "last_gasp", "nuke_30_kill_streak"]:
-			if entry.contains(ult_id):
-				last_ult = ult_id
-				break
-		if last_ult != "ultimate_unknown":
-			break
-
-	if not qte_stats_by_id.has(last_ult):
-		qte_stats_by_id[last_ult] = {"attempts": 0, "successes": 0, "failures": 0}
-	var rec: Dictionary = qte_stats_by_id[last_ult]
+func _record_qte_outcome(succeeded: bool) -> void:
+	var cid: String = _last_ultimate_card_id
+	if not qte_stats_by_id.has(cid):
+		qte_stats_by_id[cid] = {"attempts": 0, "successes": 0, "failures": 0}
+	var rec: Dictionary = qte_stats_by_id[cid]
 	rec["attempts"] = int(rec["attempts"]) + 1
 	if succeeded:
 		rec["successes"] = int(rec["successes"]) + 1
 	else:
 		rec["failures"] = int(rec["failures"]) + 1
-
-
-func _direction_to_keycode(direction: String) -> Key:
-	match direction:
-		"up":
-			return KEY_W
-		"down":
-			return KEY_S
-		"left":
-			return KEY_A
-		"right":
-			return KEY_D
-	return KEY_W
-
-
-func _send_qte_key(keycode: Key) -> void:
-	if not is_inside_tree() or not get_viewport():
-		return
-	var press := InputEventKey.new()
-	press.keycode = keycode
-	press.physical_keycode = keycode
-	press.pressed = true
-	press.echo = false
-	get_viewport().push_input(press)
-
-	var release := InputEventKey.new()
-	release.keycode = keycode
-	release.physical_keycode = keycode
-	release.pressed = false
-	release.echo = false
-	get_viewport().push_input(release)
 
 
 func _press_end_turn() -> void:
@@ -381,7 +467,6 @@ func _on_battle_over_screen_requested(_text: String, type: BattleOverPanel.Type)
 		BattleOverPanel.Type.OBLITERATED:
 			outcome = "OBLITERATED"
 
-	# Also mirror BattleOverPanel._is_obliteration() check
 	var player: Player = _get_player()
 	var enemies: Array[Enemy] = _get_living_enemies()
 	var p_alive: bool = player != null and player.stats != null and player.stats.health > 0
@@ -410,6 +495,7 @@ func _finalize_match(outcome: String) -> void:
 
 	var summary: Dictionary = {
 		"strategy": AIBotBrain.get_strategy_name(strategy),
+		"qte_mode": get_qte_mode_name(qte_mode),
 		"qte_accuracy_target": qte_accuracy,
 		"outcome": outcome,
 		"turns": maxi(1, turn_number),

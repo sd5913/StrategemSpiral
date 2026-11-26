@@ -15,7 +15,9 @@ var selected_strategies: Array[AIBotBrain.Strategy] = [
 	AIBotBrain.Strategy.HUMAN_SIM,
 	AIBotBrain.Strategy.RANDOM_FUZZ
 ]
+var batch_qte_mode: AIBattleAgent.QTEMode = AIBattleAgent.QTEMode.STRATEGY_DEFAULT
 var run_functional_tests: bool = true
+var run_qte_matrix_tests: bool = true
 var sim_time_scale: float = 8.0
 var step_delay: float = 0.0
 var auto_quit: bool = false
@@ -29,6 +31,7 @@ var _progress_bar: ProgressBar
 var _back_btn: Button
 
 var _functional_results: Array[Dictionary] = []
+var _qte_matrix_results: Array[Dictionary] = []
 var _match_records: Array[Dictionary] = []
 var _start_msec: int = 0
 
@@ -36,7 +39,6 @@ var _start_msec: int = 0
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 
-	# Notify autoload HUD to stay dormant while batch runner owns the scene
 	var autoload_node: Node = get_node_or_null("/root/AITestSystem")
 	if autoload_node:
 		autoload_node.set("runner_mode_active", true)
@@ -75,10 +77,23 @@ func _parse_cli_args() -> void:
 			step_delay = maxf(0.0, arg.split("=")[1].to_float())
 		elif arg == "--skip-functional":
 			run_functional_tests = false
+		elif arg == "--skip-qte-matrix":
+			run_qte_matrix_tests = false
 		elif arg == "--auto-quit":
 			auto_quit = true
 		elif arg == "--no-quit":
 			auto_quit = false
+		elif arg.begins_with("--qte-mode="):
+			var qm: String = arg.split("=")[1].to_lower()
+			match qm:
+				"input", "success":
+					batch_qte_mode = AIBattleAgent.QTEMode.INPUT_DRIVEN_SUCCESS
+				"mistake", "reset", "recover":
+					batch_qte_mode = AIBattleAgent.QTEMode.INPUT_DRIVEN_MISTAKE_RECOVERY
+				"fail", "timeout":
+					batch_qte_mode = AIBattleAgent.QTEMode.INPUT_DRIVEN_TIMEOUT_FAILURE
+				_:
+					batch_qte_mode = AIBattleAgent.QTEMode.STRATEGY_DEFAULT
 		elif arg.begins_with("--strategy="):
 			var s_name: String = arg.split("=")[1].to_lower()
 			match s_name:
@@ -136,7 +151,7 @@ func _build_runner_ui() -> void:
 	vbox.add_child(top_row)
 
 	_title_lbl = Label.new()
-	_title_lbl.text = "AI TEST SUITE RUNNING..."
+	_title_lbl.text = "AI & WASD QTE TEST SUITE..."
 	_title_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_title_lbl.add_theme_font_size_override("font_size", 6)
 	_title_lbl.add_theme_color_override("font_color", Color(0.82, 0.76, 1.0))
@@ -157,7 +172,7 @@ func _build_runner_ui() -> void:
 	vbox.add_child(_status_lbl)
 
 	_stats_lbl = Label.new()
-	_stats_lbl.text = "W:0 L:0 O:0 | FT: 0/10"
+	_stats_lbl.text = "FT: 0/11 | QTE: 0/8 | Matches: 0"
 	_stats_lbl.add_theme_font_size_override("font_size", 6)
 	_stats_lbl.add_theme_color_override("font_color", Color(0.68, 0.95, 0.76))
 	vbox.add_child(_stats_lbl)
@@ -171,41 +186,72 @@ func _build_runner_ui() -> void:
 func _run_full_pipeline() -> void:
 	_start_msec = Time.get_ticks_msec()
 	var total_matches_planned: int = selected_strategies.size() * games_per_strategy
-	var total_steps: int = (10 if run_functional_tests else 0) + total_matches_planned
+	var ft_steps: int = 11 if run_functional_tests else 0
+	var qte_steps: int = 8 if run_qte_matrix_tests else 0
+	var total_steps: int = ft_steps + qte_steps + total_matches_planned
 	_progress_bar.max_value = float(maxi(1, total_steps))
 	_progress_bar.value = 0.0
 
 	print("\n======================================================================")
-	print("   STRATEGEM SPIRAL (slayTheStrat) - AI BOT TESTING & REPORT SYSTEM   ")
+	print("   STRATEGEM SPIRAL (slayTheStrat) - AI & INPUT-DRIVEN QTE SUITE      ")
 	print("======================================================================")
-	print(" Functional Checks : %s" % ("Enabled (10 tests)" if run_functional_tests else "Skipped"))
-	print(" Strategies        : %d (%d matches each -> %d total battles)" % [
+	print(" Functional Checks : %s" % ("Enabled (11 tests)" if run_functional_tests else "Skipped"))
+	print(" Ultimate QTE Paths: %s" % ("Enabled (8 paths: 4 Win + 4 Fail)" if run_qte_matrix_tests else "Skipped"))
+	print(" Batch Strategies  : %d (%d matches each -> %d total battles)" % [
 		selected_strategies.size(), games_per_strategy, total_matches_planned
 	])
+	print(" Batch QTE Mode    : %s" % AIBattleAgent.get_qte_mode_name(batch_qte_mode))
 	print(" Time Scale        : %.1fx | Step Delay: %.2fs" % [sim_time_scale, step_delay])
 	print("======================================================================\n")
 
-	# Phase 1: Functional Mechanics Verification
-	if run_functional_tests:
-		_status_lbl.text = "Phase 1: Running 10 Core Mechanics Checks..."
-		print("[Phase 1] Running Core Mechanics Deterministic Verification...")
-		var verifier := AIMechanicsVerifier.new()
-		add_child(verifier)
-		_functional_results = await verifier.run_all_checks(_arena_holder)
-		verifier.queue_free()
+	var verifier := AIMechanicsVerifier.new()
+	add_child(verifier)
 
+	# Phase 1: Core Mechanics & Export-Gating Verification
+	if run_functional_tests:
+		_status_lbl.text = "Phase 1: Running 11 Core & Export Checks..."
+		print("[Phase 1] Running Core Mechanics & Export-Safety Verification...")
+		_functional_results = await verifier.run_all_checks(_arena_holder)
 		var ft_ok: int = 0
 		for r in _functional_results:
 			var passed_flag: bool = bool(r.get("passed", false))
-			var mark: String = "PASS" if passed_flag else "FAIL"
 			if passed_flag:
 				ft_ok += 1
-			print("  [%s] %s - %s (%s)" % [mark, str(r.get("id", "?")), str(r.get("title", "Unknown")), str(r.get("details", ""))])
-		_progress_bar.value = 10.0
-		_stats_lbl.text = "FT: %d/%d PASS | Starting AI Matches..." % [ft_ok, _functional_results.size()]
+			print("  [%s] %s - %s (%s)" % [
+				"PASS" if passed_flag else "FAIL",
+				str(r.get("id", "?")),
+				str(r.get("title", "Unknown")),
+				str(r.get("details", ""))
+			])
+		_progress_bar.value = float(ft_steps)
+		_stats_lbl.text = "FT: %d/%d PASS" % [ft_ok, _functional_results.size()]
 
-	# Phase 2: Multi-Strategy AI Playtest Simulation
-	print("\n[Phase 2] Running Multi-Strategy AI Bot Playtest Battles...")
+	# Phase 2: Input-Driven Ultimate Card QTE Success & Failure Matrix
+	if run_qte_matrix_tests:
+		_status_lbl.text = "Phase 2: Testing All 4 Ultimate Cards (Win + Fail)..."
+		print("\n[Phase 2] Running Input-Driven WASD QTE Matrix (4 Ultimates x Success + Failure)...")
+		_qte_matrix_results = await verifier.run_ultimate_qte_matrix(_arena_holder)
+		var qte_ok: int = 0
+		for qr in _qte_matrix_results:
+			var passed_flag: bool = bool(qr.get("passed", false))
+			if passed_flag:
+				qte_ok += 1
+			print("  [%s] %s [%s | %s] - %s" % [
+				"PASS" if passed_flag else "FAIL",
+				str(qr.get("id", "?")),
+				str(qr.get("card_id", "?")),
+				str(qr.get("path", "?")),
+				str(qr.get("details", ""))
+			])
+		_progress_bar.value = float(ft_steps + qte_steps)
+		_stats_lbl.text = "FT: %d | QTE Matrix: %d/%d PASS" % [
+			_functional_results.size(), qte_ok, _qte_matrix_results.size()
+		]
+
+	verifier.queue_free()
+
+	# Phase 3: Multi-Strategy AI Playtest Simulation
+	print("\n[Phase 3] Running Multi-Strategy AI Bot Playtest Battles...")
 	Engine.time_scale = sim_time_scale
 	var completed_matches: int = 0
 	var wins_so_far: int = 0
@@ -214,10 +260,12 @@ func _run_full_pipeline() -> void:
 
 	for strat in selected_strategies:
 		var strat_name: String = AIBotBrain.get_strategy_name(strat)
-		print("  >> Benchmarking Persona: %s (%d matches)" % [strat_name, games_per_strategy])
+		print("  >> Benchmarking Persona: %s (%d matches, QTE=%s)" % [
+			strat_name, games_per_strategy, AIBattleAgent.get_qte_mode_name(batch_qte_mode)
+		])
 		for m_idx in range(1, games_per_strategy + 1):
 			_status_lbl.text = "%s: Match %d/%d" % [strat_name, m_idx, games_per_strategy]
-			var summary: Dictionary = await _run_single_match(strat)
+			var summary: Dictionary = await _run_single_match(strat, batch_qte_mode)
 			summary["match_index"] = completed_matches + 1
 			_match_records.append(summary)
 			completed_matches += 1
@@ -230,7 +278,7 @@ func _run_full_pipeline() -> void:
 			else:
 				losses_so_far += 1
 
-			_progress_bar.value = float((10 if run_functional_tests else 0) + completed_matches)
+			_progress_bar.value = float(ft_steps + qte_steps + completed_matches)
 			_stats_lbl.text = "W:%d L:%d O:%d (%d/%d)" % [
 				wins_so_far, losses_so_far, oblit_so_far, completed_matches, total_matches_planned
 			]
@@ -244,7 +292,7 @@ func _run_full_pipeline() -> void:
 				int(summary["cards_played_total"])
 			])
 
-	# Phase 3: Build & Export Programmatic Reports
+	# Phase 4: Build & Export Programmatic Reports
 	Engine.time_scale = 1.0
 	get_tree().paused = false
 	AudioServer.set_bus_mute(0, false)
@@ -252,6 +300,7 @@ func _run_full_pipeline() -> void:
 	var elapsed_sec: float = float(Time.get_ticks_msec() - _start_msec) / 1000.0
 	var full_report: Dictionary = AIReportGenerator.build_full_report(
 		_functional_results,
+		_qte_matrix_results,
 		_match_records,
 		elapsed_sec
 	)
@@ -262,19 +311,20 @@ func _run_full_pipeline() -> void:
 
 	if auto_quit:
 		var ft_failed: int = int(full_report["functional_suite"]["failed"])
+		var qte_failed: int = int(full_report["ultimate_qte_verification"]["failed"])
 		var inv_failed: int = int(full_report["simulation_overview"]["invariant_errors_count"])
-		var exit_code: int = 0 if (ft_failed == 0 and inv_failed == 0) else 1
+		var exit_code: int = 0 if (ft_failed == 0 and qte_failed == 0 and inv_failed == 0) else 1
 		await get_tree().process_frame
 		get_tree().quit(exit_code)
 
 
-func _run_single_match(strat: AIBotBrain.Strategy) -> Dictionary:
+func _run_single_match(strat: AIBotBrain.Strategy, q_mode: AIBattleAgent.QTEMode) -> Dictionary:
 	get_tree().paused = false
 	var battle_instance: Node2D = BATTLE_SCENE.instantiate() as Node2D
 	_arena_holder.add_child(battle_instance)
 
 	var agent := AIBattleAgent.new()
-	agent.setup(battle_instance, strat, -1.0, step_delay)
+	agent.setup(battle_instance, strat, -1.0, step_delay, q_mode)
 	battle_instance.add_child(agent)
 
 	var result_box: Array[Dictionary] = []
@@ -296,42 +346,37 @@ func _run_single_match(strat: AIBotBrain.Strategy) -> Dictionary:
 
 func _print_final_console_summary(report: Dictionary) -> void:
 	var ft: Dictionary = report["functional_suite"]
+	var qm: Dictionary = report["ultimate_qte_verification"]
 	var sim: Dictionary = report["simulation_overview"]
 	print("\n======================================================================")
 	print("                     FINAL AI TEST REPORT SUMMARY                     ")
 	print("======================================================================")
-	print(" Functional Tests : %d / %d PASSED" % [int(ft["passed"]), int(ft["total"])])
-	print(" Total AI Battles : %d (Wins: %d | Losses: %d | Obliterated: %d)" % [
+	print(" Functional Tests   : %d / %d PASSED" % [int(ft["passed"]), int(ft["total"])])
+	print(" Ultimate QTE Paths : %d / %d PASSED (All 4 Ultimates Win + Fail)" % [int(qm["passed"]), int(qm["total"])])
+	print(" Total AI Battles   : %d (Wins: %d | Losses: %d | Obliterated: %d)" % [
 		int(sim["total_matches"]), int(sim["wins"]), int(sim["losses"]), int(sim["obliterated"])
 	])
-	print(" Overall Win Rate : %.1f%%" % float(sim["overall_win_rate_pct"]))
-	print(" Invariant Errors : %d" % int(sim["invariant_errors_count"]))
-	print(" Duration         : %.2f seconds" % float(report["duration_seconds"]))
+	print(" Overall Win Rate   : %.1f%%" % float(sim["overall_win_rate_pct"]))
+	print(" Invariant Errors   : %d" % int(sim["invariant_errors_count"]))
+	print(" Duration           : %.2f seconds" % float(report["duration_seconds"]))
 	print("----------------------------------------------------------------------")
-	print(" Strategy Breakdown:")
-	var sb: Dictionary = report["strategy_breakdown"]
-	for k in sb.keys():
-		var s: Dictionary = sb[k]
-		print("   - %-16s : Win %.1f%% (%dW/%dL/%dO) | Avg Win Turns: %.1f | Avg HP: %.1f" % [
-			str(k), float(s["win_rate_pct"]), int(s["wins"]), int(s["losses"]), int(s["obliterated"]),
-			float(s["avg_win_turns"]), float(s["avg_win_hp"])
-		])
-	print("----------------------------------------------------------------------")
-	print(" Saved JSON Report : %s" % ProjectSettings.globalize_path(REPORT_JSON_PATH))
-	print(" Saved MD Report   : %s" % ProjectSettings.globalize_path(REPORT_MD_PATH))
-	print(" Saved HTML Report : %s" % ProjectSettings.globalize_path(REPORT_HTML_PATH))
+	print(" Saved JSON Report  : %s" % ProjectSettings.globalize_path(REPORT_JSON_PATH))
+	print(" Saved MD Report    : %s" % ProjectSettings.globalize_path(REPORT_MD_PATH))
+	print(" Saved HTML Report  : %s" % ProjectSettings.globalize_path(REPORT_HTML_PATH))
 	print("======================================================================\n")
 
 
 func _show_final_ui_summary(report: Dictionary) -> void:
 	var ft: Dictionary = report["functional_suite"]
+	var qm: Dictionary = report["ultimate_qte_verification"]
 	var sim: Dictionary = report["simulation_overview"]
-	_title_lbl.text = "AI TEST COMPLETE (%.1fs)" % float(report["duration_seconds"])
-	_status_lbl.text = "Saved: ai_test_system/reports/test_report.md & .html"
-	_stats_lbl.text = "FT:%d/%d | Matches:%d | Win:%.1f%% | Oblit:%d | Err:%d" % [
+	_title_lbl.text = "AI & QTE SUITE COMPLETE (%.1fs)" % float(report["duration_seconds"])
+	_status_lbl.text = "Reports saved to ai_test_system/reports/"
+	_stats_lbl.text = "FT:%d/%d | QTE:%d/%d | Win:%.1f%% | Err:%d" % [
 		int(ft["passed"]), int(ft["total"]),
-		int(sim["total_matches"]), float(sim["overall_win_rate_pct"]),
-		int(sim["obliterated"]), int(sim["invariant_errors_count"])
+		int(qm["passed"]), int(qm["total"]),
+		float(sim["overall_win_rate_pct"]),
+		int(sim["invariant_errors_count"])
 	]
 	_back_btn.visible = true
 

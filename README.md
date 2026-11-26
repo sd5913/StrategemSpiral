@@ -17,11 +17,18 @@ System response: Positive when good combos are executed, and if enemy weakness i
 Innovation: speeds up typical turn-based combat to both mechanical skill and on-the-fly thinking.\
 First interaction to test: input system logic
 
+# Automated AI & QTE Test Suite
+
+The AI playtest and input-driven `W/A/S/D` QTE test runner (`res://ai_test_system/ai_test_runner.tscn`) verifies core combat mechanics, all 4 Ultimate card QTE success/wrong-key-reset/timeout-failure paths via injected `InputEventKey` events, and multi-strategy AI simulations. Test-only AI overlay controls remain strictly disabled during normal gameplay and in all exported builds.
+
+Run the headless test suite and generate JSON/Markdown reports (`gameCode/slay-the-strat/ai_test_system/reports/`):
+
+```bash
+godot --headless --path gameCode/slay-the-strat res://ai_test_system/ai_test_runner.tscn -- --games-per-strategy=10 --qte-mode=input --auto-quit
+```
+
+*(Optional debug-only live overlay in editor/dev runs: `godot --path gameCode/slay-the-strat -- --ai-overlay`)*
+
 # Visual Concept (initial)
 <img width="1024" height="572" alt="concept_fix" src="https://github.com/user-attachments/assets/9b6afb8e-5466-42ad-b9e1-aca8fa7355ae" />
 [AI-generated conceptual image. Subject to massive changes. NOT finalized UI or build.]
-
-
-
-
-
