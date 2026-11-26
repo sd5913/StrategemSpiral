@@ -1,12 +1,12 @@
 extends Node
 
 func shake(thing: Node2D, strength: float, duration: float = 0.2) -> void:
-	if not thing:
+	if not is_instance_valid(thing):
 		return
 	
 	var orig_pos := thing.position
 	var shake_count := 15
-	var tween := create_tween()
+	var tween := thing.create_tween()
 	
 	for i in shake_count:
 		var shake_offset := Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0))
@@ -16,13 +16,16 @@ func shake(thing: Node2D, strength: float, duration: float = 0.2) -> void:
 		tween.tween_property(thing, "position", target, duration / float(shake_count))
 		strength *= 0.75
 		
-	tween.finished.connect(func(): thing.position = orig_pos)
+	tween.finished.connect(func():
+		if is_instance_valid(thing):
+			thing.position = orig_pos
+	)
 
 func shake_loop(thing: Node2D, strength: float) -> Tween:
-	if not thing:
+	if not is_instance_valid(thing):
 		return null
 	var orig_pos := thing.position
-	var tween := create_tween().set_loops()
+	var tween := thing.create_tween().set_loops()
 	tween.tween_callback(func():
 		if not is_instance_valid(thing):
 			return

@@ -1,0 +1,3821 @@
+{
+  "card_telemetry": {
+    "adda_swap_health": {
+      "drawn": 41,
+      "matches_played_in": 15,
+      "play_rate_when_drawn_pct": 36.6,
+      "played": 15,
+      "qte_attempts": 15,
+      "qte_failures": 1,
+      "qte_successes": 14,
+      "win_rate_when_played_pct": 60.0
+    },
+    "last_gasp": {
+      "drawn": 36,
+      "matches_played_in": 10,
+      "play_rate_when_drawn_pct": 27.8,
+      "played": 10,
+      "qte_attempts": 10,
+      "qte_failures": 3,
+      "qte_successes": 7,
+      "win_rate_when_played_pct": 60.0
+    },
+    "mana_surge": {
+      "drawn": 160,
+      "matches_played_in": 37,
+      "play_rate_when_drawn_pct": 46.9,
+      "played": 75,
+      "qte_attempts": 0,
+      "qte_failures": 0,
+      "qte_successes": 0,
+      "win_rate_when_played_pct": 70.3
+    },
+    "nuke_30_kill_streak": {
+      "drawn": 56,
+      "matches_played_in": 34,
+      "play_rate_when_drawn_pct": 60.7,
+      "played": 34,
+      "qte_attempts": 34,
+      "qte_failures": 8,
+      "qte_successes": 26,
+      "win_rate_when_played_pct": 67.6
+    },
+    "warrior_axe_attack": {
+      "drawn": 255,
+      "matches_played_in": 52,
+      "play_rate_when_drawn_pct": 89.4,
+      "played": 228,
+      "qte_attempts": 0,
+      "qte_failures": 0,
+      "qte_successes": 0,
+      "win_rate_when_played_pct": 76.9
+    },
+    "warrior_block": {
+      "drawn": 195,
+      "matches_played_in": 45,
+      "play_rate_when_drawn_pct": 59.5,
+      "played": 116,
+      "qte_attempts": 0,
+      "qte_failures": 0,
+      "qte_successes": 0,
+      "win_rate_when_played_pct": 71.1
+    },
+    "warrior_sweep": {
+      "drawn": 216,
+      "matches_played_in": 51,
+      "play_rate_when_drawn_pct": 52.8,
+      "played": 114,
+      "qte_attempts": 0,
+      "qte_failures": 0,
+      "qte_successes": 0,
+      "win_rate_when_played_pct": 74.5
+    },
+    "wssws_blood_ritual": {
+      "drawn": 40,
+      "matches_played_in": 18,
+      "play_rate_when_drawn_pct": 45.0,
+      "played": 18,
+      "qte_attempts": 18,
+      "qte_failures": 2,
+      "qte_successes": 16,
+      "win_rate_when_played_pct": 77.8
+    }
+  },
+  "code_audit_findings": [
+    {
+      "description": "Shaker.shake() previously bound tweens to the Shaker autoload without checking is_instance_valid(thing) on completion. Killing an enemy during a 2.0s Ultimate shake (e.g. adda_swap_health followed by Axe Attack) triggered freed-object errors. Fixed by binding shake tween to thing.create_tween() with validity guards.",
+      "id": "BUG-01",
+      "location": "global/shaker.gd:shake()",
+      "severity": "HIGH (Fixed in Branch)"
+    },
+    {
+      "description": "Shaker.shake_loop() (triggered by Last Gasp Ultimate) created an infinite set_loops() tween on the global Shaker autoload instead of thing.create_tween(). When Player was freed on scene reload or battle cleanup without battle_over_screen_requested, Godot spammed 'Lambda capture at index 0 was freed' at 20Hz indefinitely. Fixed by binding shake_loop to thing.create_tween().set_loops().",
+      "id": "BUG-02",
+      "location": "global/shaker.gd:shake_loop()",
+      "severity": "HIGH (Fixed in Branch)"
+    },
+    {
+      "description": "EndTurnButton started enabled (disabled=false) during the initial 1.0s opening hand draw animation. Clicking End Turn during the opening draw launched Enemy Turn #1 concurrently with Player Turn #1, causing double signal connections on Golem actions, freed-card discard errors, and state race conditions. Fixed by initializing end_turn_button.disabled = true until player_hand_drawn.",
+      "id": "BUG-03",
+      "location": "scenes/ui/battle_ui.gd:_ready()",
+      "severity": "CRITICAL (Fixed in Branch)"
+    },
+    {
+      "description": "Nuclear whiteout and fade tweens were bound to Player instead of Arena, risking an unresolving await if Player node was freed mid-cutscene (leaving battle_over_resolution_in_progress stuck true). Fixed by binding cutscene tweens to Arena.",
+      "id": "BUG-04",
+      "location": "characters/warrior/cards/warrior_nuke.gd:_play_nuclear_cutscene()",
+      "severity": "MEDIUM (Fixed in Branch)"
+    },
+    {
+      "description": "Enemy nodes keep static scene names (GhostEnemy, GobEnemy, GolemEnemy) when EnemyStats are shuffled across the 4-enemy pool (including Wolf). Tools and future UI scripts must inspect enemy.stats.ai rather than node.name.",
+      "id": "NOTE-01",
+      "location": "scenes/battle/battle.gd:_shuffle_enemy_types()",
+      "severity": "DESIGN / INFO"
+    },
+    {
+      "description": "Stats.set_health() clamps health to max_health (45). Playing Blood Ritual above 23 HP caps healing at 45 while still applying -7 HP/turn bleed, making it a high-skill situational comeback card.",
+      "id": "NOTE-02",
+      "location": "characters/warrior/cards/warrior_blood_ritual.gd",
+      "severity": "BALANCE / INFO"
+    }
+  ],
+  "duration_seconds": 140.75,
+  "encounter_breakdown": {
+    "Ghost + Gob + Golem": {
+      "avg_turns": 4.4,
+      "avg_win_hp": 12.4,
+      "losses": 5,
+      "matches": 18,
+      "obliterated": 0,
+      "win_rate_pct": 72.2,
+      "wins": 13
+    },
+    "Ghost + Gob + Wolf": {
+      "avg_turns": 3.6,
+      "avg_win_hp": 13.2,
+      "losses": 4,
+      "matches": 16,
+      "obliterated": 1,
+      "win_rate_pct": 68.8,
+      "wins": 11
+    },
+    "Ghost + Golem + Wolf": {
+      "avg_turns": 6.1,
+      "avg_win_hp": 14.2,
+      "losses": 3,
+      "matches": 9,
+      "obliterated": 0,
+      "win_rate_pct": 66.7,
+      "wins": 6
+    },
+    "Gob + Golem + Wolf": {
+      "avg_turns": 3.7,
+      "avg_win_hp": 12.0,
+      "losses": 4,
+      "matches": 17,
+      "obliterated": 1,
+      "win_rate_pct": 70.6,
+      "wins": 12
+    }
+  },
+  "functional_suite": {
+    "failed": 0,
+    "passed": 10,
+    "results": [
+      {
+        "details": "StartScreen loaded title='Strategem-Spiral', float_y=19.0, target='res://scenes/battle/battle.tscn' exists=true",
+        "id": "FT-01",
+        "passed": true,
+        "title": "StartScreen UI & Battle Scene Link"
+      },
+      {
+        "details": "Observed distinct 3-enemy lineups across pool: [\"Ghost\", \"Gob\", \"Golem\", \"Wolf\"]",
+        "id": "FT-02",
+        "passed": true,
+        "title": "3-of-4 Randomized Enemy Pool (Ghost/Gob/Golem/Wolf)"
+      },
+      {
+        "details": "Block=5 (true), Target HP 10 -> 4 (true)",
+        "id": "FT-03",
+        "passed": true,
+        "title": "Warrior Block (+5) & Axe Attack (6 Dmg + Lunge)"
+      },
+      {
+        "details": "Next turn starting mana after 1x Mana Surge = 5 (expected 5)",
+        "id": "FT-04",
+        "passed": true,
+        "title": "Mana Surge Next-Turn Overflow (3 -> 5 Mana)"
+      },
+      {
+        "details": "From 4 Ultimates + 2 Basics, drew 3 total cards with 1 Ultimate (expected 3 total, 1 Ultimate)",
+        "id": "FT-05",
+        "passed": true,
+        "title": "Single Ultimate-in-Hand Draw Constraint"
+      },
+      {
+        "details": "Gob HP 7->7 (untouched), Protecting Golem HP 40->34 (-6)",
+        "id": "FT-06",
+        "passed": true,
+        "title": "Golem Ally Protection Taunt Redirect"
+      },
+      {
+        "details": "Player HP 40->32 (expected 32), Wolf HP 5->9 (expected 9)",
+        "id": "FT-07",
+        "passed": true,
+        "title": "Wolf Double-Bite (4x2 Dmg) & Lifesteal (+2x2 HP)"
+      },
+      {
+        "details": "Intent switched=true, Ghost block after action=15 (expected 15)",
+        "id": "FT-08",
+        "passed": true,
+        "title": "Ghost Conditional Mega-Block (<=6 HP -> +15 Block)"
+      },
+      {
+        "details": "Player HP 40->26 (-14), Gob self-destructed=true",
+        "id": "FT-09",
+        "passed": true,
+        "title": "Gob Kamikaze Attack (14 Player Dmg + Self-Kill)"
+      },
+      {
+        "details": "LastGasp WASD->3x mult (true), Nuke WASD->OBLITERATED (true)",
+        "id": "FT-10",
+        "passed": true,
+        "title": "Ultimate WASD QTE Input & Nuke OBLITERATED Outcome"
+      }
+    ],
+    "total": 10
+  },
+  "generated_at": "2026-11-26T18:52:39",
+  "match_history": [
+    {
+      "action_trace": [
+        "T1: PLAY warrior_block -> Block 5 incoming damage (unblocked=14)",
+        "T1: PLAY warrior_sweep -> Sweep AoE (9 total dmg, 0 kills)",
+        "T1: END_TURN (No playable cards with remaining mana (0))",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T2: END_TURN (Remaining playable cards have negative tactical value (best=-110.0))",
+        "T3: PLAY warrior_block -> Block 5 incoming damage (unblocked=11)",
+        "T3: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T3: END_TURN (Remaining playable cards have negative tactical value (best=-90.0))",
+        "T4: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T4: PLAY warrior_block -> Block 4 incoming damage (unblocked=4)",
+        "T4: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T4: END_TURN (No playable cards with remaining mana (0))",
+        "T5: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T5: PLAY warrior_block -> Block 5 incoming damage (unblocked=11)",
+        "T5: END_TURN (Remaining playable cards have negative tactical value (best=-200.0))",
+        "T6: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost [LETHAL]",
+        "T6: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T6: END_TURN (Remaining playable cards have negative tactical value (best=-25.0))",
+        "T7: PLAY wssws_blood_ritual -> Blood Ritual Ult (+21 HP, -7/turn)",
+        "T7: PLAY warrior_block -> Block 4 incoming damage (unblocked=4)",
+        "T7: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T7: END_TURN (Remaining playable cards have negative tactical value (best=-25.0))",
+        "T8: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T8: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T8: PLAY warrior_sweep -> Sweep AoE (3 total dmg, 0 kills)",
+        "T8: END_TURN (No playable cards with remaining mana (1))",
+        "T9: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem [LETHAL]"
+      ],
+      "block_from_cards": 25,
+      "cards_drawn_by_id": {
+        "adda_swap_health": 1,
+        "last_gasp": 1,
+        "mana_surge": 6,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 10,
+        "warrior_block": 7,
+        "warrior_sweep": 7,
+        "wssws_blood_ritual": 2
+      },
+      "cards_played_by_id": {
+        "mana_surge": 3,
+        "warrior_axe_attack": 9,
+        "warrior_block": 5,
+        "warrior_sweep": 2,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_total": 20,
+      "damage_taken_events": 5,
+      "encounter_enemies": [
+        "Gob",
+        "Ghost",
+        "Golem"
+      ],
+      "encounter_signature": "Ghost + Gob + Golem",
+      "invariant_errors": [],
+      "match_index": 1,
+      "outcome": "WIN",
+      "player_final_hp": 31,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 1.0,
+      "qte_stats_by_id": {
+        "wssws_blood_ritual": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Tactical_Pro",
+      "turns": 9
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_sweep -> Sweep AoE (9 total dmg, 0 kills)",
+        "T1: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T1: END_TURN (Remaining playable cards have negative tactical value (best=-90.0))",
+        "T2: PLAY nuke_30_kill_streak -> Tactical Nuke Ult! Player survives (41->11 HP) & deals 30 AoE true dmg",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem [LETHAL]"
+      ],
+      "block_from_cards": 0,
+      "cards_drawn_by_id": {
+        "mana_surge": 2,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 2,
+        "warrior_sweep": 2,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_by_id": {
+        "mana_surge": 1,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 2,
+        "warrior_sweep": 1
+      },
+      "cards_played_total": 5,
+      "damage_taken_events": 2,
+      "encounter_enemies": [
+        "Ghost",
+        "Gob",
+        "Golem"
+      ],
+      "encounter_signature": "Ghost + Gob + Golem",
+      "invariant_errors": [],
+      "match_index": 2,
+      "outcome": "WIN",
+      "player_final_hp": 11,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 1.0,
+      "qte_stats_by_id": {
+        "nuke_30_kill_streak": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Tactical_Pro",
+      "turns": 2
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf",
+        "T1: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T1: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T1: END_TURN (Remaining playable cards have negative tactical value (best=-110.0))",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf",
+        "T2: PLAY warrior_block -> Block 5 incoming damage (unblocked=22)",
+        "T2: PLAY warrior_block -> Block 5 incoming damage (unblocked=17)",
+        "T2: END_TURN (Remaining playable cards have negative tactical value (best=-100.0))",
+        "T3: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf [LETHAL]",
+        "T3: PLAY wssws_blood_ritual -> Blood Ritual Ult (+20 HP, -7/turn)",
+        "T3: PLAY warrior_sweep -> Sweep AoE (3 total dmg, 0 kills)",
+        "T3: END_TURN (No playable cards with remaining mana (0))",
+        "T4: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T4: END_TURN (Remaining playable cards have negative tactical value (best=-10.0))",
+        "T5: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T5: PLAY warrior_block -> Block 5 incoming damage (unblocked=7)",
+        "T5: END_TURN (No playable cards with remaining mana (1))",
+        "T6: PLAY warrior_sweep -> Sweep AoE (3 total dmg, 0 kills)",
+        "T6: END_TURN (Remaining playable cards have negative tactical value (best=-25.0))",
+        "T7: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T7: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T7: END_TURN (Remaining playable cards have negative tactical value (best=-10.0))",
+        "T8: PLAY warrior_sweep -> Sweep AoE (3 total dmg, 0 kills)",
+        "T8: END_TURN (Remaining playable cards have negative tactical value (best=-10.0))",
+        "T9: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T9: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost [LETHAL]"
+      ],
+      "block_from_cards": 15,
+      "cards_drawn_by_id": {
+        "adda_swap_health": 1,
+        "last_gasp": 1,
+        "mana_surge": 6,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 9,
+        "warrior_block": 8,
+        "warrior_sweep": 8,
+        "wssws_blood_ritual": 2
+      },
+      "cards_played_by_id": {
+        "mana_surge": 2,
+        "warrior_axe_attack": 9,
+        "warrior_block": 3,
+        "warrior_sweep": 3,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_total": 18,
+      "damage_taken_events": 6,
+      "encounter_enemies": [
+        "Ghost",
+        "Gob",
+        "Wolf"
+      ],
+      "encounter_signature": "Ghost + Gob + Wolf",
+      "invariant_errors": [],
+      "match_index": 3,
+      "outcome": "WIN",
+      "player_final_hp": 1,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 1.0,
+      "qte_stats_by_id": {
+        "wssws_blood_ritual": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Tactical_Pro",
+      "turns": 9
+    },
+    {
+      "action_trace": [
+        "T1: PLAY nuke_30_kill_streak -> Tactical Nuke Ult! Player survives (45->15 HP) & deals 30 AoE true dmg",
+        "T1: PLAY warrior_sweep -> Sweep AoE (3 total dmg, 0 kills)",
+        "T1: END_TURN (Remaining playable cards have negative tactical value (best=-10.0))",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem [LETHAL]"
+      ],
+      "block_from_cards": 0,
+      "cards_drawn_by_id": {
+        "mana_surge": 2,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 2,
+        "warrior_block": 1,
+        "warrior_sweep": 1,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_by_id": {
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 2,
+        "warrior_sweep": 1
+      },
+      "cards_played_total": 4,
+      "damage_taken_events": 1,
+      "encounter_enemies": [
+        "Wolf",
+        "Gob",
+        "Golem"
+      ],
+      "encounter_signature": "Gob + Golem + Wolf",
+      "invariant_errors": [],
+      "match_index": 4,
+      "outcome": "WIN",
+      "player_final_hp": 15,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 1.0,
+      "qte_stats_by_id": {
+        "nuke_30_kill_streak": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Tactical_Pro",
+      "turns": 2
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_block -> Block 5 incoming damage (unblocked=7)",
+        "T1: PLAY warrior_sweep -> Sweep AoE (9 total dmg, 0 kills)",
+        "T1: END_TURN (Remaining playable cards have negative tactical value (best=-100.0))",
+        "T2: PLAY warrior_block -> Block 5 incoming damage (unblocked=18)",
+        "T2: PLAY warrior_block -> Block 5 incoming damage (unblocked=13)",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T2: END_TURN (Remaining playable cards have negative tactical value (best=-110.0))",
+        "T3: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T3: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T3: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T3: END_TURN (Remaining playable cards have negative tactical value (best=-90.0))",
+        "T4: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T4: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T4: PLAY warrior_sweep -> Sweep AoE (6 total dmg, 0 kills)",
+        "T4: PLAY warrior_sweep -> Sweep AoE (6 total dmg, 0 kills)",
+        "T4: END_TURN (No playable cards with remaining mana (1))",
+        "T5: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T5: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T5: END_TURN (Remaining playable cards have negative tactical value (best=-25.0))",
+        "T6: PLAY warrior_block -> Block 4 incoming damage (unblocked=4)",
+        "T6: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T6: END_TURN (Remaining playable cards have negative tactical value (best=-110.0))",
+        "T7: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T7: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost [LETHAL]",
+        "T7: PLAY warrior_sweep -> Sweep AoE (3 total dmg, 0 kills)",
+        "T7: END_TURN (Remaining playable cards have negative tactical value (best=-100.0))",
+        "T8: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T8: PLAY warrior_sweep -> Sweep AoE (3 total dmg, 0 kills)",
+        "T8: END_TURN (Remaining playable cards have negative tactical value (best=-200.0))",
+        "T9: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T9: PLAY wssws_blood_ritual -> Blood Ritual Ult (+19 HP, -7/turn)",
+        "T9: END_TURN (Remaining playable cards have negative tactical value (best=-25.0))",
+        "T10: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T10: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T10: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T10: END_TURN (No playable cards with remaining mana (0))",
+        "T11: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T11: PLAY warrior_sweep -> Sweep AoE (3 total dmg, 1 kills)"
+      ],
+      "block_from_cards": 20,
+      "cards_drawn_by_id": {
+        "adda_swap_health": 2,
+        "last_gasp": 2,
+        "mana_surge": 7,
+        "nuke_30_kill_streak": 3,
+        "warrior_axe_attack": 11,
+        "warrior_block": 8,
+        "warrior_sweep": 9,
+        "wssws_blood_ritual": 2
+      },
+      "cards_played_by_id": {
+        "mana_surge": 6,
+        "warrior_axe_attack": 11,
+        "warrior_block": 4,
+        "warrior_sweep": 6,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_total": 28,
+      "damage_taken_events": 6,
+      "encounter_enemies": [
+        "Golem",
+        "Gob",
+        "Ghost"
+      ],
+      "encounter_signature": "Ghost + Gob + Golem",
+      "invariant_errors": [],
+      "match_index": 5,
+      "outcome": "WIN",
+      "player_final_hp": 24,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 1.0,
+      "qte_stats_by_id": {
+        "wssws_blood_ritual": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Tactical_Pro",
+      "turns": 11
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf",
+        "T1: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf [LETHAL]",
+        "T1: PLAY warrior_block -> Block 5 incoming damage (unblocked=14)",
+        "T1: END_TURN (Remaining playable cards have negative tactical value (best=-100.0))",
+        "T2: PLAY nuke_30_kill_streak -> Tactical Nuke Ult! Player survives (36->6 HP) & deals 30 AoE true dmg",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T2: PLAY warrior_sweep -> Sweep AoE (3 total dmg, 0 kills)",
+        "T2: END_TURN (No playable cards with remaining mana (0))",
+        "T3: PLAY warrior_sweep -> Sweep AoE (3 total dmg, 1 kills)"
+      ],
+      "block_from_cards": 5,
+      "cards_drawn_by_id": {
+        "adda_swap_health": 1,
+        "mana_surge": 1,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 3,
+        "warrior_block": 2,
+        "warrior_sweep": 4
+      },
+      "cards_played_by_id": {
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 3,
+        "warrior_block": 1,
+        "warrior_sweep": 2
+      },
+      "cards_played_total": 7,
+      "damage_taken_events": 2,
+      "encounter_enemies": [
+        "Gob",
+        "Golem",
+        "Wolf"
+      ],
+      "encounter_signature": "Gob + Golem + Wolf",
+      "invariant_errors": [],
+      "match_index": 6,
+      "outcome": "WIN",
+      "player_final_hp": 6,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 1.0,
+      "qte_stats_by_id": {
+        "nuke_30_kill_streak": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Tactical_Pro",
+      "turns": 3
+    },
+    {
+      "action_trace": [
+        "T1: PLAY nuke_30_kill_streak -> Tactical Nuke Ult! Player survives (45->15 HP) & deals 30 AoE true dmg",
+        "T1: PLAY warrior_block -> Block 4 incoming damage (unblocked=4)",
+        "T1: PLAY warrior_sweep -> Sweep AoE (3 total dmg, 0 kills)",
+        "T1: END_TURN (No playable cards with remaining mana (0))",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T2: PLAY warrior_sweep -> Sweep AoE (3 total dmg, 1 kills)"
+      ],
+      "block_from_cards": 5,
+      "cards_drawn_by_id": {
+        "mana_surge": 1,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 1,
+        "warrior_block": 2,
+        "warrior_sweep": 3
+      },
+      "cards_played_by_id": {
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 1,
+        "warrior_block": 1,
+        "warrior_sweep": 2
+      },
+      "cards_played_total": 5,
+      "damage_taken_events": 1,
+      "encounter_enemies": [
+        "Gob",
+        "Ghost",
+        "Golem"
+      ],
+      "encounter_signature": "Ghost + Gob + Golem",
+      "invariant_errors": [],
+      "match_index": 7,
+      "outcome": "WIN",
+      "player_final_hp": 15,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 1.0,
+      "qte_stats_by_id": {
+        "nuke_30_kill_streak": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Tactical_Pro",
+      "turns": 2
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T1: PLAY warrior_block -> Block 5 incoming damage (unblocked=18)",
+        "T1: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T1: END_TURN (No playable cards with remaining mana (0))",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T2: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T2: END_TURN (No playable cards with remaining mana (1))",
+        "T3: PLAY adda_swap_health -> Swap HP Ult (Player 21->43, Enemies sum 43->22)",
+        "T3: PLAY warrior_block -> Block 4 incoming damage (unblocked=4)",
+        "T3: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T3: PLAY warrior_sweep -> Sweep AoE (6 total dmg, 0 kills)",
+        "T3: END_TURN (No playable cards with remaining mana (1))",
+        "T4: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T4: PLAY warrior_block -> Block 5 incoming damage (unblocked=11)",
+        "T4: PLAY warrior_sweep -> Sweep AoE (6 total dmg, 0 kills)",
+        "T4: END_TURN (No playable cards with remaining mana (1))",
+        "T5: PLAY warrior_block -> Block 5 incoming damage (unblocked=11)",
+        "T5: END_TURN (Remaining playable cards have negative tactical value (best=-110.0))",
+        "T6: PLAY wssws_blood_ritual -> Blood Ritual Ult (+14 HP, -7/turn)",
+        "T6: END_TURN (No playable cards with remaining mana (3))",
+        "T7: PLAY nuke_30_kill_streak -> Tactical Nuke Ult! Player survives (34->4 HP) & deals 30 AoE true dmg"
+      ],
+      "block_from_cards": 20,
+      "cards_drawn_by_id": {
+        "adda_swap_health": 1,
+        "last_gasp": 1,
+        "mana_surge": 3,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 5,
+        "warrior_block": 6,
+        "warrior_sweep": 5,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_by_id": {
+        "adda_swap_health": 1,
+        "mana_surge": 3,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 5,
+        "warrior_block": 4,
+        "warrior_sweep": 2,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_total": 17,
+      "damage_taken_events": 7,
+      "encounter_enemies": [
+        "Golem",
+        "Gob",
+        "Ghost"
+      ],
+      "encounter_signature": "Ghost + Gob + Golem",
+      "invariant_errors": [],
+      "match_index": 8,
+      "outcome": "WIN",
+      "player_final_hp": 4,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 1.0,
+      "qte_stats_by_id": {
+        "adda_swap_health": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        },
+        "nuke_30_kill_streak": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        },
+        "wssws_blood_ritual": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Tactical_Pro",
+      "turns": 7
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_sweep -> Sweep AoE (9 total dmg, 0 kills)",
+        "T1: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T1: END_TURN (No playable cards with remaining mana (0))",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T2: PLAY warrior_sweep -> Sweep AoE (9 total dmg, 0 kills)",
+        "T2: END_TURN (Remaining playable cards have negative tactical value (best=-110.0))",
+        "T3: PLAY warrior_block -> Block 5 incoming damage (unblocked=19)",
+        "T3: PLAY warrior_block -> Block 5 incoming damage (unblocked=14)",
+        "T3: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T3: END_TURN (No playable cards with remaining mana (0))",
+        "T4: PLAY warrior_block -> Block 5 incoming damage (unblocked=8)",
+        "T4: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf",
+        "T4: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf [LETHAL]",
+        "T4: END_TURN (No playable cards with remaining mana (0))",
+        "T5: PLAY warrior_block -> Block 5 incoming damage (unblocked=7)",
+        "T5: END_TURN (Remaining playable cards have negative tactical value (best=-200.0))",
+        "T6: PLAY adda_swap_health -> Swap HP Ult (Player 11->17, Enemies sum 17->12)",
+        "T6: END_TURN (No playable cards with remaining mana (3))",
+        "T7: PLAY warrior_block -> Block 5 incoming damage (unblocked=11)",
+        "T7: PLAY warrior_sweep -> Sweep AoE (6 total dmg, 0 kills)",
+        "T7: PLAY wssws_blood_ritual -> Blood Ritual Ult (+13 HP, -7/turn)",
+        "T7: END_TURN (No playable cards with remaining mana (0))",
+        "T8: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T8: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost [LETHAL]",
+        "T8: END_TURN (Remaining playable cards have negative tactical value (best=-200.0))",
+        "T9: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T9: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem [LETHAL]"
+      ],
+      "block_from_cards": 25,
+      "cards_drawn_by_id": {
+        "adda_swap_health": 1,
+        "last_gasp": 1,
+        "mana_surge": 5,
+        "nuke_30_kill_streak": 2,
+        "warrior_axe_attack": 9,
+        "warrior_block": 5,
+        "warrior_sweep": 7,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_by_id": {
+        "adda_swap_health": 1,
+        "mana_surge": 1,
+        "warrior_axe_attack": 9,
+        "warrior_block": 5,
+        "warrior_sweep": 3,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_total": 20,
+      "damage_taken_events": 13,
+      "encounter_enemies": [
+        "Ghost",
+        "Golem",
+        "Wolf"
+      ],
+      "encounter_signature": "Ghost + Golem + Wolf",
+      "invariant_errors": [],
+      "match_index": 9,
+      "outcome": "WIN",
+      "player_final_hp": 2,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 1.0,
+      "qte_stats_by_id": {
+        "adda_swap_health": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        },
+        "wssws_blood_ritual": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Tactical_Pro",
+      "turns": 9
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf",
+        "T1: PLAY warrior_sweep -> Sweep AoE (9 total dmg, 0 kills)",
+        "T1: END_TURN (Remaining playable cards have negative tactical value (best=-110.0))",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf [LETHAL]",
+        "T2: PLAY warrior_block -> Block 5 incoming damage (unblocked=7)",
+        "T2: END_TURN (Remaining playable cards have negative tactical value (best=-10.0))",
+        "T3: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T3: PLAY warrior_sweep -> Sweep AoE (3 total dmg, 1 kills)"
+      ],
+      "block_from_cards": 5,
+      "cards_drawn_by_id": {
+        "adda_swap_health": 1,
+        "last_gasp": 1,
+        "mana_surge": 3,
+        "warrior_axe_attack": 3,
+        "warrior_block": 1,
+        "warrior_sweep": 2,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_by_id": {
+        "warrior_axe_attack": 3,
+        "warrior_block": 1,
+        "warrior_sweep": 2
+      },
+      "cards_played_total": 6,
+      "damage_taken_events": 4,
+      "encounter_enemies": [
+        "Wolf",
+        "Gob",
+        "Ghost"
+      ],
+      "encounter_signature": "Ghost + Gob + Wolf",
+      "invariant_errors": [],
+      "match_index": 10,
+      "outcome": "WIN",
+      "player_final_hp": 21,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 1.0,
+      "qte_stats_by_id": {},
+      "remaining_enemy_hp": 0,
+      "strategy": "Tactical_Pro",
+      "turns": 3
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf",
+        "T1: PLAY warrior_block -> Block 5 incoming damage (unblocked=26)",
+        "T1: END_TURN (Remaining playable cards have negative tactical value (best=-110.0))",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf",
+        "T2: PLAY warrior_block -> Block 5 incoming damage (unblocked=8)",
+        "T2: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T2: END_TURN (No playable cards with remaining mana (0))",
+        "T3: PLAY warrior_block -> Block 5 incoming damage (unblocked=12)",
+        "T3: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T3: PLAY warrior_sweep -> Sweep AoE (6 total dmg, 0 kills)",
+        "T3: END_TURN (Remaining playable cards have negative tactical value (best=-200.0))",
+        "T4: PLAY warrior_block -> Block 5 incoming damage (unblocked=12)",
+        "T4: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf",
+        "T4: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf [LETHAL]",
+        "T4: PLAY wssws_blood_ritual -> Blood Ritual Ult (+14 HP, -7/turn)",
+        "T4: END_TURN (No playable cards with remaining mana (0))",
+        "T5: PLAY adda_swap_health -> Swap HP Ult (Player 21->28, Enemies sum 28->21)",
+        "T5: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T5: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T5: END_TURN (No playable cards with remaining mana (1))",
+        "T6: PLAY warrior_block -> Block 4 incoming damage (unblocked=4)",
+        "T6: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T6: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T6: END_TURN (Remaining playable cards have negative tactical value (best=-100.0))",
+        "T7: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T7: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T7: PLAY warrior_sweep -> Sweep AoE (3 total dmg, 0 kills)",
+        "T7: END_TURN (Remaining playable cards have negative tactical value (best=-10.0))"
+      ],
+      "block_from_cards": 25,
+      "cards_drawn_by_id": {
+        "adda_swap_health": 2,
+        "last_gasp": 1,
+        "mana_surge": 5,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 8,
+        "warrior_block": 5,
+        "warrior_sweep": 5,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_by_id": {
+        "adda_swap_health": 1,
+        "mana_surge": 4,
+        "warrior_axe_attack": 8,
+        "warrior_block": 5,
+        "warrior_sweep": 2,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_total": 21,
+      "damage_taken_events": 8,
+      "encounter_enemies": [
+        "Wolf",
+        "Gob",
+        "Golem"
+      ],
+      "encounter_signature": "Gob + Golem + Wolf",
+      "invariant_errors": [],
+      "match_index": 11,
+      "outcome": "LOSE",
+      "player_final_hp": 0,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 1.0,
+      "qte_stats_by_id": {
+        "adda_swap_health": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        },
+        "wssws_blood_ritual": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 4,
+      "strategy": "Tactical_Pro",
+      "turns": 7
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf",
+        "T1: PLAY warrior_block -> Block 5 incoming damage (unblocked=12)",
+        "T1: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T1: END_TURN (No playable cards with remaining mana (0))",
+        "T2: PLAY nuke_30_kill_streak -> Tactical Nuke Ult! Player survives (38->8 HP) & deals 30 AoE true dmg",
+        "T2: PLAY warrior_sweep -> Sweep AoE (3 total dmg, 0 kills)",
+        "T2: PLAY warrior_sweep -> Sweep AoE (3 total dmg, 0 kills)",
+        "T2: END_TURN (Remaining playable cards have negative tactical value (best=-10.0))",
+        "T3: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem [LETHAL]"
+      ],
+      "block_from_cards": 5,
+      "cards_drawn_by_id": {
+        "mana_surge": 3,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 2,
+        "warrior_block": 1,
+        "warrior_sweep": 4,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_by_id": {
+        "mana_surge": 1,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 2,
+        "warrior_block": 1,
+        "warrior_sweep": 2
+      },
+      "cards_played_total": 7,
+      "damage_taken_events": 3,
+      "encounter_enemies": [
+        "Golem",
+        "Wolf",
+        "Ghost"
+      ],
+      "encounter_signature": "Ghost + Golem + Wolf",
+      "invariant_errors": [],
+      "match_index": 12,
+      "outcome": "WIN",
+      "player_final_hp": 8,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 1.0,
+      "qte_stats_by_id": {
+        "nuke_30_kill_streak": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Tactical_Pro",
+      "turns": 3
+    },
+    {
+      "action_trace": [
+        "T1: PLAY nuke_30_kill_streak -> Tactical Nuke Ult! Player survives (45->15 HP) & deals 30 AoE true dmg"
+      ],
+      "block_from_cards": 0,
+      "cards_drawn_by_id": {
+        "nuke_30_kill_streak": 1,
+        "warrior_block": 1,
+        "warrior_sweep": 2
+      },
+      "cards_played_by_id": {
+        "nuke_30_kill_streak": 1
+      },
+      "cards_played_total": 1,
+      "damage_taken_events": 1,
+      "encounter_enemies": [
+        "Wolf",
+        "Ghost",
+        "Gob"
+      ],
+      "encounter_signature": "Ghost + Gob + Wolf",
+      "invariant_errors": [],
+      "match_index": 13,
+      "outcome": "WIN",
+      "player_final_hp": 15,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.95,
+      "qte_stats_by_id": {
+        "nuke_30_kill_streak": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Aggressive",
+      "turns": 1
+    },
+    {
+      "action_trace": [
+        "T1: PLAY nuke_30_kill_streak -> Tactical Nuke Ult! Player survives (45->15 HP) & deals 30 AoE true dmg",
+        "T1: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T1: PLAY warrior_sweep -> Sweep AoE (3 total dmg, 0 kills)",
+        "T1: END_TURN (No playable cards with remaining mana (0))",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem [LETHAL]"
+      ],
+      "block_from_cards": 0,
+      "cards_drawn_by_id": {
+        "mana_surge": 1,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 2,
+        "warrior_block": 1,
+        "warrior_sweep": 2,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_by_id": {
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 2,
+        "warrior_sweep": 1
+      },
+      "cards_played_total": 4,
+      "damage_taken_events": 2,
+      "encounter_enemies": [
+        "Gob",
+        "Ghost",
+        "Golem"
+      ],
+      "encounter_signature": "Ghost + Gob + Golem",
+      "invariant_errors": [],
+      "match_index": 14,
+      "outcome": "WIN",
+      "player_final_hp": 11,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.95,
+      "qte_stats_by_id": {
+        "nuke_30_kill_streak": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Aggressive",
+      "turns": 2
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf",
+        "T1: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T1: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T1: END_TURN (Remaining playable cards have negative tactical value (best=-110.0))",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T2: PLAY warrior_sweep -> Sweep AoE (9 total dmg, 0 kills)",
+        "T2: PLAY warrior_block -> Block 5 incoming damage (unblocked=15)",
+        "T2: END_TURN (No playable cards with remaining mana (2))",
+        "T3: PLAY warrior_sweep -> Sweep AoE (9 total dmg, 0 kills)",
+        "T3: PLAY warrior_block -> Block 5 incoming damage (unblocked=12)",
+        "T3: END_TURN (Remaining playable cards have negative tactical value (best=-200.0))",
+        "T4: PLAY adda_swap_health -> Swap HP Ult (Player 20->30, Enemies sum 30->21)",
+        "T4: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf",
+        "T4: PLAY warrior_sweep -> Sweep AoE (9 total dmg, 1 kills)",
+        "T4: END_TURN (No playable cards with remaining mana (0))",
+        "T5: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem [LETHAL]",
+        "T5: PLAY warrior_block -> Block 5 incoming damage (unblocked=7)",
+        "T5: PLAY wssws_blood_ritual -> Blood Ritual Ult (+15 HP, -7/turn)",
+        "T5: END_TURN (No playable cards with remaining mana (1))",
+        "T6: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T6: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost [LETHAL]"
+      ],
+      "block_from_cards": 15,
+      "cards_drawn_by_id": {
+        "adda_swap_health": 1,
+        "last_gasp": 1,
+        "mana_surge": 5,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 7,
+        "warrior_block": 4,
+        "warrior_sweep": 4,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_by_id": {
+        "adda_swap_health": 1,
+        "mana_surge": 2,
+        "warrior_axe_attack": 7,
+        "warrior_block": 3,
+        "warrior_sweep": 3,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_total": 17,
+      "damage_taken_events": 7,
+      "encounter_enemies": [
+        "Wolf",
+        "Golem",
+        "Ghost"
+      ],
+      "encounter_signature": "Ghost + Golem + Wolf",
+      "invariant_errors": [],
+      "match_index": 15,
+      "outcome": "WIN",
+      "player_final_hp": 36,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.95,
+      "qte_stats_by_id": {
+        "adda_swap_health": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        },
+        "wssws_blood_ritual": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Aggressive",
+      "turns": 6
+    },
+    {
+      "action_trace": [
+        "T1: PLAY nuke_30_kill_streak -> Tactical Nuke Ult! Player survives (45->15 HP) & deals 30 AoE true dmg",
+        "T1: PLAY warrior_sweep -> Sweep AoE (3 total dmg, 0 kills)",
+        "T1: PLAY warrior_block -> Block 4 incoming damage (unblocked=4)",
+        "T1: END_TURN (No playable cards with remaining mana (0))",
+        "T2: PLAY last_gasp -> Last Gasp Ult enables immediate 3x LETHAL",
+        "T2: PLAY warrior_axe_attack -> Axe 18 dmg -> Golem [LETHAL]"
+      ],
+      "block_from_cards": 5,
+      "cards_drawn_by_id": {
+        "last_gasp": 1,
+        "mana_surge": 1,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 2,
+        "warrior_block": 1,
+        "warrior_sweep": 2
+      },
+      "cards_played_by_id": {
+        "last_gasp": 1,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 1,
+        "warrior_block": 1,
+        "warrior_sweep": 1
+      },
+      "cards_played_total": 5,
+      "damage_taken_events": 2,
+      "encounter_enemies": [
+        "Wolf",
+        "Golem",
+        "Gob"
+      ],
+      "encounter_signature": "Gob + Golem + Wolf",
+      "invariant_errors": [],
+      "match_index": 16,
+      "outcome": "WIN",
+      "player_final_hp": 5,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.95,
+      "qte_stats_by_id": {
+        "last_gasp": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        },
+        "nuke_30_kill_streak": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Aggressive",
+      "turns": 2
+    },
+    {
+      "action_trace": [
+        "T1: PLAY nuke_30_kill_streak -> Tactical Nuke Ult! Player survives (45->15 HP) & deals 30 AoE true dmg",
+        "T1: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T1: PLAY warrior_sweep -> Sweep AoE (3 total dmg, 0 kills)",
+        "T1: END_TURN (No playable cards with remaining mana (0))",
+        "T2: PLAY last_gasp -> Last Gasp Ult enables immediate 3x LETHAL",
+        "T2: PLAY warrior_sweep -> Sweep AoE (9 total dmg, 1 kills)"
+      ],
+      "block_from_cards": 0,
+      "cards_drawn_by_id": {
+        "last_gasp": 1,
+        "mana_surge": 1,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 1,
+        "warrior_block": 2,
+        "warrior_sweep": 2
+      },
+      "cards_played_by_id": {
+        "last_gasp": 1,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 1,
+        "warrior_sweep": 2
+      },
+      "cards_played_total": 5,
+      "damage_taken_events": 3,
+      "encounter_enemies": [
+        "Wolf",
+        "Golem",
+        "Gob"
+      ],
+      "encounter_signature": "Gob + Golem + Wolf",
+      "invariant_errors": [],
+      "match_index": 17,
+      "outcome": "WIN",
+      "player_final_hp": 5,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.95,
+      "qte_stats_by_id": {
+        "last_gasp": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        },
+        "nuke_30_kill_streak": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Aggressive",
+      "turns": 2
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_sweep -> Sweep AoE (9 total dmg, 0 kills)",
+        "T1: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T1: END_TURN (Remaining playable cards have negative tactical value (best=-90.0))",
+        "T2: PLAY nuke_30_kill_streak -> Tactical Nuke Ult! Player survives (33->3 HP) & deals 30 AoE true dmg",
+        "T2: PLAY warrior_sweep -> Sweep AoE (3 total dmg, 0 kills)",
+        "T2: END_TURN (Remaining playable cards have negative tactical value (best=-10.0))",
+        "T3: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem [LETHAL]"
+      ],
+      "block_from_cards": 0,
+      "cards_drawn_by_id": {
+        "adda_swap_health": 1,
+        "mana_surge": 3,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 1,
+        "warrior_block": 3,
+        "warrior_sweep": 2,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_by_id": {
+        "mana_surge": 1,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 1,
+        "warrior_sweep": 2
+      },
+      "cards_played_total": 5,
+      "damage_taken_events": 4,
+      "encounter_enemies": [
+        "Wolf",
+        "Ghost",
+        "Golem"
+      ],
+      "encounter_signature": "Ghost + Golem + Wolf",
+      "invariant_errors": [],
+      "match_index": 18,
+      "outcome": "WIN",
+      "player_final_hp": 3,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.95,
+      "qte_stats_by_id": {
+        "nuke_30_kill_streak": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Aggressive",
+      "turns": 3
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_sweep -> Sweep AoE (9 total dmg, 0 kills)",
+        "T1: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T1: END_TURN (Remaining playable cards have negative tactical value (best=-110.0))",
+        "T2: PLAY nuke_30_kill_streak -> Tactical Nuke Ult! Player survives (38->8 HP) & deals 30 AoE true dmg",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem [LETHAL]"
+      ],
+      "block_from_cards": 0,
+      "cards_drawn_by_id": {
+        "last_gasp": 1,
+        "mana_surge": 1,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 2,
+        "warrior_block": 1,
+        "warrior_sweep": 2
+      },
+      "cards_played_by_id": {
+        "mana_surge": 1,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 2,
+        "warrior_sweep": 1
+      },
+      "cards_played_total": 5,
+      "damage_taken_events": 2,
+      "encounter_enemies": [
+        "Gob",
+        "Golem",
+        "Ghost"
+      ],
+      "encounter_signature": "Ghost + Gob + Golem",
+      "invariant_errors": [],
+      "match_index": 19,
+      "outcome": "WIN",
+      "player_final_hp": 8,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.95,
+      "qte_stats_by_id": {
+        "nuke_30_kill_streak": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Aggressive",
+      "turns": 2
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf",
+        "T1: PLAY warrior_sweep -> Sweep AoE (9 total dmg, 0 kills)",
+        "T1: END_TURN (No playable cards with remaining mana (0))",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf [LETHAL]",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T2: END_TURN (No playable cards with remaining mana (0))",
+        "T3: PLAY adda_swap_health -> Swap HP Ult (Player 15->33, Enemies sum 33->15)",
+        "T3: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T3: PLAY warrior_sweep -> Sweep AoE (3 total dmg, 0 kills)",
+        "T3: END_TURN (No playable cards with remaining mana (0))",
+        "T4: PLAY warrior_sweep -> Sweep AoE (3 total dmg, 0 kills)",
+        "T4: PLAY wssws_blood_ritual -> Blood Ritual Ult (+12 HP, -7/turn)",
+        "T4: END_TURN (Remaining playable cards have negative tactical value (best=-10.0))",
+        "T5: PLAY warrior_block -> Block 4 incoming damage (unblocked=4)",
+        "T5: END_TURN (Remaining playable cards have negative tactical value (best=-20.0))",
+        "T6: PLAY last_gasp -> Last Gasp Ult enables immediate 3x LETHAL",
+        "T6: PLAY warrior_axe_attack -> Axe 18 dmg -> Golem [LETHAL]"
+      ],
+      "block_from_cards": 5,
+      "cards_drawn_by_id": {
+        "adda_swap_health": 1,
+        "last_gasp": 1,
+        "mana_surge": 3,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 7,
+        "warrior_block": 4,
+        "warrior_sweep": 5,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_by_id": {
+        "adda_swap_health": 1,
+        "last_gasp": 1,
+        "warrior_axe_attack": 6,
+        "warrior_block": 1,
+        "warrior_sweep": 3,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_total": 13,
+      "damage_taken_events": 6,
+      "encounter_enemies": [
+        "Gob",
+        "Wolf",
+        "Golem"
+      ],
+      "encounter_signature": "Gob + Golem + Wolf",
+      "invariant_errors": [],
+      "match_index": 20,
+      "outcome": "WIN",
+      "player_final_hp": 5,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.95,
+      "qte_stats_by_id": {
+        "adda_swap_health": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        },
+        "last_gasp": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        },
+        "wssws_blood_ritual": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Aggressive",
+      "turns": 6
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf",
+        "T1: PLAY warrior_sweep -> Sweep AoE (9 total dmg, 0 kills)",
+        "T1: END_TURN (No playable cards with remaining mana (0))",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf",
+        "T2: PLAY warrior_sweep -> Sweep AoE (9 total dmg, 1 kills)",
+        "T2: END_TURN (No playable cards with remaining mana (0))",
+        "T3: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T3: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T3: PLAY wssws_blood_ritual -> Blood Ritual Ult (+22 HP, -7/turn)",
+        "T3: END_TURN (Remaining playable cards have negative tactical value (best=-25.0))",
+        "T4: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T4: PLAY warrior_sweep -> Sweep AoE (6 total dmg, 0 kills)",
+        "T4: END_TURN (Remaining playable cards have negative tactical value (best=-110.0))",
+        "T5: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T5: PLAY warrior_block -> Block 4 incoming damage (unblocked=4)",
+        "T5: END_TURN (Remaining playable cards have negative tactical value (best=-200.0))",
+        "T6: PLAY adda_swap_health -> Swap HP Ult (Player 19->30, Enemies sum 30->20)",
+        "T6: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T6: PLAY warrior_sweep -> Sweep AoE (6 total dmg, 0 kills)",
+        "T6: PLAY warrior_block -> Block 5 incoming damage (unblocked=7)",
+        "T6: END_TURN (No playable cards with remaining mana (1))",
+        "T7: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T7: PLAY warrior_sweep -> Sweep AoE (6 total dmg, 1 kills)",
+        "T7: END_TURN (No playable cards with remaining mana (0))",
+        "T8: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T8: PLAY warrior_sweep -> Sweep AoE (3 total dmg, 0 kills)",
+        "T8: END_TURN (No playable cards with remaining mana (0))",
+        "T9: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T9: END_TURN (Remaining playable cards have negative tactical value (best=-10.0))"
+      ],
+      "block_from_cards": 10,
+      "cards_drawn_by_id": {
+        "adda_swap_health": 1,
+        "last_gasp": 1,
+        "mana_surge": 6,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 9,
+        "warrior_block": 7,
+        "warrior_sweep": 8,
+        "wssws_blood_ritual": 2
+      },
+      "cards_played_by_id": {
+        "adda_swap_health": 1,
+        "mana_surge": 1,
+        "warrior_axe_attack": 9,
+        "warrior_block": 2,
+        "warrior_sweep": 6,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_total": 20,
+      "damage_taken_events": 7,
+      "encounter_enemies": [
+        "Wolf",
+        "Ghost",
+        "Golem"
+      ],
+      "encounter_signature": "Ghost + Golem + Wolf",
+      "invariant_errors": [],
+      "match_index": 21,
+      "outcome": "LOSE",
+      "player_final_hp": 0,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.95,
+      "qte_stats_by_id": {
+        "adda_swap_health": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        },
+        "wssws_blood_ritual": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 6,
+      "strategy": "Aggressive",
+      "turns": 9
+    },
+    {
+      "action_trace": [
+        "T1: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T1: PLAY warrior_block -> Block 4 incoming damage (unblocked=4)",
+        "T1: END_TURN (Remaining playable cards have negative tactical value (best=-25.0))",
+        "T2: PLAY warrior_sweep -> Sweep AoE (9 total dmg, 0 kills)",
+        "T2: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T2: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T2: PLAY warrior_block -> Block 5 incoming damage (unblocked=7)",
+        "T2: END_TURN (No playable cards with remaining mana (0))",
+        "T3: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T3: PLAY warrior_sweep -> Sweep AoE (9 total dmg, 0 kills)",
+        "T3: PLAY warrior_sweep -> Sweep AoE (9 total dmg, 0 kills)",
+        "T3: PLAY warrior_sweep -> Sweep AoE (9 total dmg, 0 kills)",
+        "T3: END_TURN (No playable cards with remaining mana (0))",
+        "T4: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem [LETHAL]",
+        "T4: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T4: END_TURN (Remaining playable cards have negative tactical value (best=-25.0))",
+        "T5: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T5: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T5: PLAY wssws_blood_ritual -> Blood Ritual Ult (+22 HP, -7/turn)",
+        "T5: END_TURN (No playable cards with remaining mana (1))",
+        "T6: PLAY warrior_sweep -> Sweep AoE (3 total dmg, 0 kills)",
+        "T6: END_TURN (Remaining playable cards have negative tactical value (best=-25.0))",
+        "T7: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T7: PLAY warrior_sweep -> Sweep AoE (3 total dmg, 1 kills)"
+      ],
+      "block_from_cards": 10,
+      "cards_drawn_by_id": {
+        "adda_swap_health": 2,
+        "last_gasp": 1,
+        "mana_surge": 4,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 6,
+        "warrior_block": 5,
+        "warrior_sweep": 7,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_by_id": {
+        "mana_surge": 3,
+        "warrior_axe_attack": 6,
+        "warrior_block": 2,
+        "warrior_sweep": 6,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_total": 18,
+      "damage_taken_events": 4,
+      "encounter_enemies": [
+        "Gob",
+        "Golem",
+        "Ghost"
+      ],
+      "encounter_signature": "Ghost + Gob + Golem",
+      "invariant_errors": [],
+      "match_index": 22,
+      "outcome": "WIN",
+      "player_final_hp": 23,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.95,
+      "qte_stats_by_id": {
+        "wssws_blood_ritual": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Aggressive",
+      "turns": 7
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf",
+        "T1: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T1: PLAY warrior_block -> Block 5 incoming damage (unblocked=22)",
+        "T1: END_TURN (Remaining playable cards have negative tactical value (best=-100.0))",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T2: PLAY warrior_sweep -> Sweep AoE (9 total dmg, 0 kills)",
+        "T2: PLAY warrior_block -> Block 5 incoming damage (unblocked=8)",
+        "T2: PLAY warrior_block -> Block 3 incoming damage (unblocked=3)",
+        "T2: END_TURN (No playable cards with remaining mana (0))",
+        "T3: PLAY warrior_block -> Block 5 incoming damage (unblocked=26)",
+        "T3: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T3: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem [LETHAL]",
+        "T3: END_TURN (Remaining playable cards have negative tactical value (best=-110.0))",
+        "T4: PLAY warrior_sweep -> Sweep AoE (3 total dmg, 0 kills)",
+        "T4: END_TURN (Remaining playable cards have negative tactical value (best=-10.0))",
+        "T5: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf",
+        "T5: PLAY warrior_sweep -> Sweep AoE (3 total dmg, 0 kills)",
+        "T5: PLAY nuke_30_kill_streak -> Desperation Nuke for mutual OBLITERATION instead of defeat"
+      ],
+      "block_from_cards": 20,
+      "cards_drawn_by_id": {
+        "adda_swap_health": 1,
+        "last_gasp": 1,
+        "mana_surge": 3,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 5,
+        "warrior_block": 4,
+        "warrior_sweep": 4,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_by_id": {
+        "mana_surge": 1,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 5,
+        "warrior_block": 4,
+        "warrior_sweep": 3
+      },
+      "cards_played_total": 14,
+      "damage_taken_events": 7,
+      "encounter_enemies": [
+        "Wolf",
+        "Golem",
+        "Gob"
+      ],
+      "encounter_signature": "Gob + Golem + Wolf",
+      "invariant_errors": [],
+      "match_index": 23,
+      "outcome": "OBLITERATED",
+      "player_final_hp": 0,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.95,
+      "qte_stats_by_id": {
+        "nuke_30_kill_streak": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Aggressive",
+      "turns": 5
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_axe_attack -> Axe 6 dmg -> Gob",
+        "T1: PLAY warrior_sweep -> Sweep AoE (9 total dmg, 1 kills)",
+        "T1: END_TURN (No playable cards with remaining mana (0))",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost [LETHAL]",
+        "T2: END_TURN (Remaining playable cards have negative tactical value (best=-25.0))",
+        "T3: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T3: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T3: END_TURN (Remaining playable cards have negative tactical value (best=-25.0))",
+        "T4: PLAY nuke_30_kill_streak -> Tactical Nuke Ult! Player survives (34->4 HP) & deals 30 AoE true dmg",
+        "T4: PLAY warrior_sweep -> Sweep AoE (3 total dmg, 1 kills)"
+      ],
+      "block_from_cards": 0,
+      "cards_drawn_by_id": {
+        "last_gasp": 1,
+        "mana_surge": 3,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 4,
+        "warrior_block": 4,
+        "warrior_sweep": 3
+      },
+      "cards_played_by_id": {
+        "mana_surge": 1,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 4,
+        "warrior_sweep": 2
+      },
+      "cards_played_total": 8,
+      "damage_taken_events": 3,
+      "encounter_enemies": [
+        "Golem",
+        "Gob",
+        "Ghost"
+      ],
+      "encounter_signature": "Ghost + Gob + Golem",
+      "invariant_errors": [],
+      "match_index": 24,
+      "outcome": "WIN",
+      "player_final_hp": 4,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.95,
+      "qte_stats_by_id": {
+        "nuke_30_kill_streak": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Aggressive",
+      "turns": 4
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_block -> Block 5 incoming damage (unblocked=12)",
+        "T1: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf",
+        "T1: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf [LETHAL]",
+        "T1: END_TURN (No playable cards with remaining mana (0))",
+        "T2: PLAY warrior_block -> Block 4 incoming damage (unblocked=4)",
+        "T2: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T2: END_TURN (No playable cards with remaining mana (0))",
+        "T3: PLAY warrior_block -> Block 5 incoming damage (unblocked=7)",
+        "T3: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T3: PLAY warrior_sweep -> Sweep AoE (6 total dmg, 0 kills)",
+        "T3: END_TURN (Remaining playable cards have negative tactical value (best=-100.0))",
+        "T4: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T4: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T4: END_TURN (Remaining playable cards have negative tactical value (best=-90.0))",
+        "T5: PLAY nuke_30_kill_streak -> Tactical Nuke Ult! Player survives (32->2 HP) & deals 30 AoE true dmg",
+        "T5: END_TURN (Remaining playable cards have negative tactical value (best=-12.6))"
+      ],
+      "block_from_cards": 15,
+      "cards_drawn_by_id": {
+        "adda_swap_health": 1,
+        "mana_surge": 3,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 5,
+        "warrior_block": 4,
+        "warrior_sweep": 4,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_by_id": {
+        "mana_surge": 3,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 4,
+        "warrior_block": 3,
+        "warrior_sweep": 1
+      },
+      "cards_played_total": 12,
+      "damage_taken_events": 5,
+      "encounter_enemies": [
+        "Ghost",
+        "Golem",
+        "Wolf"
+      ],
+      "encounter_signature": "Ghost + Golem + Wolf",
+      "invariant_errors": [],
+      "match_index": 25,
+      "outcome": "LOSE",
+      "player_final_hp": 0,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.95,
+      "qte_stats_by_id": {
+        "nuke_30_kill_streak": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 9,
+      "strategy": "Defensive",
+      "turns": 5
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_block -> Block 5 incoming damage (unblocked=18)",
+        "T1: PLAY warrior_sweep -> Sweep AoE (9 total dmg, 0 kills)",
+        "T1: END_TURN (Remaining playable cards have negative tactical value (best=-90.0))",
+        "T2: PLAY nuke_30_kill_streak -> Tactical Nuke Ult! Player survives (32->2 HP) & deals 30 AoE true dmg",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T2: PLAY warrior_sweep -> Sweep AoE (3 total dmg, 1 kills)"
+      ],
+      "block_from_cards": 5,
+      "cards_drawn_by_id": {
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 1,
+        "warrior_block": 2,
+        "warrior_sweep": 3,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_by_id": {
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 1,
+        "warrior_block": 1,
+        "warrior_sweep": 2
+      },
+      "cards_played_total": 5,
+      "damage_taken_events": 3,
+      "encounter_enemies": [
+        "Gob",
+        "Ghost",
+        "Golem"
+      ],
+      "encounter_signature": "Ghost + Gob + Golem",
+      "invariant_errors": [],
+      "match_index": 26,
+      "outcome": "WIN",
+      "player_final_hp": 2,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.95,
+      "qte_stats_by_id": {
+        "nuke_30_kill_streak": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Defensive",
+      "turns": 2
+    },
+    {
+      "action_trace": [
+        "T1: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T1: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T1: PLAY warrior_axe_attack -> Axe 6 dmg -> Gob",
+        "T1: END_TURN (No playable cards with remaining mana (0))",
+        "T2: PLAY warrior_block -> Block 5 incoming damage (unblocked=18)",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Gob",
+        "T2: PLAY warrior_sweep -> Sweep AoE (9 total dmg, 1 kills)",
+        "T2: END_TURN (Remaining playable cards have negative tactical value (best=-90.0))",
+        "T3: PLAY warrior_block -> Block 4 incoming damage (unblocked=4)",
+        "T3: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T3: END_TURN (Remaining playable cards have negative tactical value (best=-25.0))",
+        "T4: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T4: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T4: PLAY warrior_block -> Defensive precaution block",
+        "T4: END_TURN (Remaining playable cards have negative tactical value (best=-110.0))",
+        "T5: PLAY adda_swap_health -> Swap HP Ult (Player 41->45, Enemies sum 49->42)",
+        "T5: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T5: PLAY warrior_sweep -> Sweep AoE (6 total dmg, 0 kills)",
+        "T5: END_TURN (No playable cards with remaining mana (2))",
+        "T6: PLAY nuke_30_kill_streak -> Tactical Nuke Ult! Player survives (41->11 HP) & deals 30 AoE true dmg"
+      ],
+      "block_from_cards": 15,
+      "cards_drawn_by_id": {
+        "adda_swap_health": 1,
+        "last_gasp": 1,
+        "mana_surge": 4,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 7,
+        "warrior_block": 4,
+        "warrior_sweep": 4,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_by_id": {
+        "adda_swap_health": 1,
+        "mana_surge": 3,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 5,
+        "warrior_block": 3,
+        "warrior_sweep": 2
+      },
+      "cards_played_total": 15,
+      "damage_taken_events": 3,
+      "encounter_enemies": [
+        "Ghost",
+        "Golem",
+        "Gob"
+      ],
+      "encounter_signature": "Ghost + Gob + Golem",
+      "invariant_errors": [],
+      "match_index": 27,
+      "outcome": "LOSE",
+      "player_final_hp": 0,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.95,
+      "qte_stats_by_id": {
+        "adda_swap_health": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        },
+        "nuke_30_kill_streak": {
+          "attempts": 1,
+          "failures": 1,
+          "successes": 0
+        }
+      },
+      "remaining_enemy_hp": 19,
+      "strategy": "Defensive",
+      "turns": 6
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_block -> Block 4 incoming damage (unblocked=4)",
+        "T1: PLAY warrior_axe_attack -> Axe 6 dmg -> Gob",
+        "T1: END_TURN (Remaining playable cards have negative tactical value (best=-25.0))",
+        "T2: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Gob",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Gob [LETHAL]",
+        "T2: END_TURN (No playable cards with remaining mana (0))",
+        "T3: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T3: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T3: PLAY warrior_sweep -> Sweep AoE (6 total dmg, 0 kills)",
+        "T3: END_TURN (Remaining playable cards have negative tactical value (best=-90.0))",
+        "T4: PLAY warrior_block -> Block 5 incoming damage (unblocked=11)",
+        "T4: PLAY adda_swap_health -> Swap HP Ult (Player 37->45, Enemies sum 48->38)",
+        "T4: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T4: PLAY warrior_sweep -> Sweep AoE (6 total dmg, 0 kills)",
+        "T4: END_TURN (No playable cards with remaining mana (1))",
+        "T5: PLAY nuke_30_kill_streak -> Tactical Nuke Ult! Player survives (39->9 HP) & deals 30 AoE true dmg"
+      ],
+      "block_from_cards": 10,
+      "cards_drawn_by_id": {
+        "adda_swap_health": 1,
+        "mana_surge": 3,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 5,
+        "warrior_block": 4,
+        "warrior_sweep": 4,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_by_id": {
+        "adda_swap_health": 1,
+        "mana_surge": 2,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 5,
+        "warrior_block": 2,
+        "warrior_sweep": 2
+      },
+      "cards_played_total": 13,
+      "damage_taken_events": 5,
+      "encounter_enemies": [
+        "Gob",
+        "Ghost",
+        "Golem"
+      ],
+      "encounter_signature": "Ghost + Gob + Golem",
+      "invariant_errors": [],
+      "match_index": 28,
+      "outcome": "WIN",
+      "player_final_hp": 9,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.95,
+      "qte_stats_by_id": {
+        "adda_swap_health": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        },
+        "nuke_30_kill_streak": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Defensive",
+      "turns": 5
+    },
+    {
+      "action_trace": [
+        "T1: PLAY nuke_30_kill_streak -> Tactical Nuke Ult! Player survives (45->15 HP) & deals 30 AoE true dmg",
+        "T1: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T1: PLAY warrior_block -> Defensive precaution block",
+        "T1: END_TURN (No playable cards with remaining mana (1))",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem [LETHAL]"
+      ],
+      "block_from_cards": 5,
+      "cards_drawn_by_id": {
+        "mana_surge": 1,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 2,
+        "warrior_block": 2,
+        "warrior_sweep": 2
+      },
+      "cards_played_by_id": {
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 2,
+        "warrior_block": 1
+      },
+      "cards_played_total": 4,
+      "damage_taken_events": 1,
+      "encounter_enemies": [
+        "Gob",
+        "Wolf",
+        "Golem"
+      ],
+      "encounter_signature": "Gob + Golem + Wolf",
+      "invariant_errors": [],
+      "match_index": 29,
+      "outcome": "WIN",
+      "player_final_hp": 15,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.95,
+      "qte_stats_by_id": {
+        "nuke_30_kill_streak": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Defensive",
+      "turns": 2
+    },
+    {
+      "action_trace": [
+        "T1: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T1: PLAY warrior_axe_attack -> Axe 6 dmg -> Gob",
+        "T1: PLAY warrior_axe_attack -> Axe 6 dmg -> Gob [LETHAL]",
+        "T1: END_TURN (No playable cards with remaining mana (0))",
+        "T2: PLAY warrior_block -> Block 5 incoming damage (unblocked=7)",
+        "T2: PLAY warrior_sweep -> Sweep AoE (6 total dmg, 0 kills)",
+        "T2: PLAY warrior_sweep -> Sweep AoE (6 total dmg, 0 kills)",
+        "T2: END_TURN (Remaining playable cards have negative tactical value (best=-90.0))",
+        "T3: PLAY nuke_30_kill_streak -> Tactical Nuke Ult! Player survives (34->4 HP) & deals 30 AoE true dmg",
+        "T3: PLAY warrior_block -> Block 4 incoming damage (unblocked=4)",
+        "T3: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem [LETHAL]"
+      ],
+      "block_from_cards": 10,
+      "cards_drawn_by_id": {
+        "mana_surge": 1,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 5,
+        "warrior_block": 2,
+        "warrior_sweep": 2,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_by_id": {
+        "mana_surge": 1,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 3,
+        "warrior_block": 2,
+        "warrior_sweep": 2
+      },
+      "cards_played_total": 9,
+      "damage_taken_events": 3,
+      "encounter_enemies": [
+        "Ghost",
+        "Gob",
+        "Golem"
+      ],
+      "encounter_signature": "Ghost + Gob + Golem",
+      "invariant_errors": [],
+      "match_index": 30,
+      "outcome": "WIN",
+      "player_final_hp": 4,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.95,
+      "qte_stats_by_id": {
+        "nuke_30_kill_streak": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Defensive",
+      "turns": 3
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_block -> Block 5 incoming damage (unblocked=29)",
+        "T1: PLAY warrior_block -> Block 5 incoming damage (unblocked=24)",
+        "T1: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T1: END_TURN (Remaining playable cards have negative tactical value (best=-100.0))",
+        "T2: PLAY warrior_block -> Block 5 incoming damage (unblocked=15)",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf [LETHAL]",
+        "T2: END_TURN (Remaining playable cards have negative tactical value (best=-12.6))",
+        "T3: PLAY last_gasp -> Last Gasp Ult enables immediate 3x LETHAL",
+        "T3: PLAY warrior_axe_attack -> Axe 18 dmg -> Ghost [LETHAL]"
+      ],
+      "block_from_cards": 15,
+      "cards_drawn_by_id": {
+        "adda_swap_health": 1,
+        "last_gasp": 1,
+        "mana_surge": 1,
+        "warrior_axe_attack": 4,
+        "warrior_block": 3,
+        "warrior_sweep": 2
+      },
+      "cards_played_by_id": {
+        "last_gasp": 1,
+        "mana_surge": 1,
+        "warrior_axe_attack": 3,
+        "warrior_block": 3
+      },
+      "cards_played_total": 8,
+      "damage_taken_events": 6,
+      "encounter_enemies": [
+        "Gob",
+        "Ghost",
+        "Wolf"
+      ],
+      "encounter_signature": "Ghost + Gob + Wolf",
+      "invariant_errors": [],
+      "match_index": 31,
+      "outcome": "WIN",
+      "player_final_hp": 5,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.95,
+      "qte_stats_by_id": {
+        "last_gasp": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Defensive",
+      "turns": 3
+    },
+    {
+      "action_trace": [
+        "T1: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T1: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T1: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf",
+        "T1: END_TURN (No playable cards with remaining mana (0))",
+        "T2: PLAY warrior_block -> Block 5 incoming damage (unblocked=8)",
+        "T2: PLAY warrior_block -> Block 3 incoming damage (unblocked=3)",
+        "T2: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T2: PLAY warrior_sweep -> Sweep AoE (9 total dmg, 0 kills)",
+        "T2: END_TURN (No playable cards with remaining mana (2))",
+        "T3: PLAY nuke_30_kill_streak -> Tactical Nuke Ult! Player survives (33->3 HP) & deals 30 AoE true dmg",
+        "T3: PLAY warrior_block -> Block 4 incoming damage (unblocked=4)",
+        "T3: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T3: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem [LETHAL]"
+      ],
+      "block_from_cards": 15,
+      "cards_drawn_by_id": {
+        "mana_surge": 3,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 4,
+        "warrior_block": 3,
+        "warrior_sweep": 1
+      },
+      "cards_played_by_id": {
+        "mana_surge": 3,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 3,
+        "warrior_block": 3,
+        "warrior_sweep": 1
+      },
+      "cards_played_total": 11,
+      "damage_taken_events": 4,
+      "encounter_enemies": [
+        "Wolf",
+        "Golem",
+        "Gob"
+      ],
+      "encounter_signature": "Gob + Golem + Wolf",
+      "invariant_errors": [],
+      "match_index": 32,
+      "outcome": "WIN",
+      "player_final_hp": 3,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.95,
+      "qte_stats_by_id": {
+        "nuke_30_kill_streak": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Defensive",
+      "turns": 3
+    },
+    {
+      "action_trace": [
+        "T1: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T1: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T1: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf",
+        "T1: END_TURN (No playable cards with remaining mana (0))",
+        "T2: PLAY warrior_block -> Block 5 incoming damage (unblocked=22)",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf",
+        "T2: PLAY warrior_sweep -> Sweep AoE (9 total dmg, 1 kills)",
+        "T2: END_TURN (Remaining playable cards have negative tactical value (best=-110.0))",
+        "T3: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T3: PLAY wssws_blood_ritual -> Blood Ritual Ult (+17 HP, -7/turn)",
+        "T3: END_TURN (Remaining playable cards have negative tactical value (best=-10.0))",
+        "T4: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T4: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost [LETHAL]"
+      ],
+      "block_from_cards": 5,
+      "cards_drawn_by_id": {
+        "last_gasp": 1,
+        "mana_surge": 3,
+        "warrior_axe_attack": 5,
+        "warrior_block": 2,
+        "warrior_sweep": 4,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_by_id": {
+        "mana_surge": 2,
+        "warrior_axe_attack": 5,
+        "warrior_block": 1,
+        "warrior_sweep": 1,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_total": 10,
+      "damage_taken_events": 4,
+      "encounter_enemies": [
+        "Gob",
+        "Ghost",
+        "Wolf"
+      ],
+      "encounter_signature": "Ghost + Gob + Wolf",
+      "invariant_errors": [],
+      "match_index": 33,
+      "outcome": "WIN",
+      "player_final_hp": 31,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.95,
+      "qte_stats_by_id": {
+        "wssws_blood_ritual": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Defensive",
+      "turns": 4
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_block -> Block 5 incoming damage (unblocked=21)",
+        "T1: PLAY warrior_block -> Block 5 incoming damage (unblocked=16)",
+        "T1: PLAY warrior_axe_attack -> Axe 6 dmg -> Gob",
+        "T1: END_TURN (Remaining playable cards have negative tactical value (best=-100.0))",
+        "T2: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T2: END_TURN (Remaining playable cards have negative tactical value (best=-90.0))",
+        "T3: PLAY warrior_block -> Block 4 incoming damage (unblocked=4)",
+        "T3: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T3: PLAY warrior_sweep -> Sweep AoE (6 total dmg, 0 kills)",
+        "T3: END_TURN (Remaining playable cards have negative tactical value (best=-25.0))",
+        "T4: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T4: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T4: PLAY warrior_sweep -> Sweep AoE (6 total dmg, 0 kills)",
+        "T4: END_TURN (No playable cards with remaining mana (1))",
+        "T5: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T5: PLAY warrior_sweep -> Sweep AoE (6 total dmg, 0 kills)",
+        "T5: END_TURN (Remaining playable cards have negative tactical value (best=-200.0))",
+        "T6: PLAY warrior_block -> Block 5 incoming damage (unblocked=7)",
+        "T6: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T6: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T6: END_TURN (Remaining playable cards have negative tactical value (best=-110.0))",
+        "T7: PLAY wssws_blood_ritual -> Blood Ritual Ult (+21 HP, -7/turn)",
+        "T7: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T7: PLAY warrior_sweep -> Sweep AoE (6 total dmg, 0 kills)",
+        "T7: PLAY warrior_sweep -> Sweep AoE (6 total dmg, 1 kills)",
+        "T7: END_TURN (No playable cards with remaining mana (0))",
+        "T8: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T8: PLAY warrior_block -> Defensive precaution block",
+        "T8: END_TURN (Remaining playable cards have negative tactical value (best=-10.0))",
+        "T9: PLAY warrior_block -> Defensive precaution block",
+        "T9: PLAY warrior_sweep -> Sweep AoE (3 total dmg, 0 kills)",
+        "T9: END_TURN (Remaining playable cards have negative tactical value (best=-200.0))",
+        "T10: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T10: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T10: PLAY warrior_block -> Defensive precaution block",
+        "T10: END_TURN (Remaining playable cards have negative tactical value (best=-100.0))",
+        "T11: PLAY warrior_block -> Defensive precaution block",
+        "T11: PLAY warrior_sweep -> Sweep AoE (3 total dmg, 0 kills)",
+        "T11: END_TURN (No playable cards with remaining mana (0))",
+        "T12: PLAY warrior_block -> Block 5 incoming damage (unblocked=7)",
+        "T12: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T12: END_TURN (Remaining playable cards have negative tactical value (best=-10.0))"
+      ],
+      "block_from_cards": 45,
+      "cards_drawn_by_id": {
+        "adda_swap_health": 3,
+        "last_gasp": 1,
+        "mana_surge": 8,
+        "nuke_30_kill_streak": 2,
+        "warrior_axe_attack": 11,
+        "warrior_block": 10,
+        "warrior_sweep": 10,
+        "wssws_blood_ritual": 2
+      },
+      "cards_played_by_id": {
+        "mana_surge": 4,
+        "warrior_axe_attack": 11,
+        "warrior_block": 9,
+        "warrior_sweep": 7,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_total": 32,
+      "damage_taken_events": 6,
+      "encounter_enemies": [
+        "Gob",
+        "Golem",
+        "Ghost"
+      ],
+      "encounter_signature": "Ghost + Gob + Golem",
+      "invariant_errors": [],
+      "match_index": 34,
+      "outcome": "LOSE",
+      "player_final_hp": 0,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.95,
+      "qte_stats_by_id": {
+        "wssws_blood_ritual": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 2,
+      "strategy": "Defensive",
+      "turns": 12
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_block -> Block 5 incoming damage (unblocked=15)",
+        "T1: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf",
+        "T1: END_TURN (Remaining playable cards have negative tactical value (best=-90.0))",
+        "T2: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T2: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T2: END_TURN (No playable cards with remaining mana (0))",
+        "T3: PLAY warrior_block -> Block 5 incoming damage (unblocked=12)",
+        "T3: PLAY warrior_block -> Block 5 incoming damage (unblocked=7)",
+        "T3: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T3: END_TURN (Remaining playable cards have negative tactical value (best=-110.0))",
+        "T4: PLAY warrior_block -> Block 5 incoming damage (unblocked=19)",
+        "T4: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf",
+        "T4: END_TURN (Remaining playable cards have negative tactical value (best=-200.0))",
+        "T5: PLAY adda_swap_health -> Swap HP Ult (Player 4->45, Enemies sum 48->6)",
+        "T5: PLAY warrior_sweep -> Sweep AoE (9 total dmg, 0 kills)",
+        "T5: END_TURN (Remaining playable cards have negative tactical value (best=-10.0))",
+        "T6: PLAY warrior_sweep -> Sweep AoE (9 total dmg, 1 kills)",
+        "T6: PLAY warrior_block -> Block 5 incoming damage (unblocked=8)",
+        "T6: END_TURN (No playable cards with remaining mana (0))",
+        "T7: PLAY warrior_block -> Block 5 incoming damage (unblocked=8)",
+        "T7: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf",
+        "T7: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf [LETHAL]",
+        "T7: END_TURN (No playable cards with remaining mana (0))",
+        "T8: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T8: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost [LETHAL]"
+      ],
+      "block_from_cards": 30,
+      "cards_drawn_by_id": {
+        "adda_swap_health": 2,
+        "last_gasp": 1,
+        "mana_surge": 5,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 9,
+        "warrior_block": 6,
+        "warrior_sweep": 7,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_by_id": {
+        "adda_swap_health": 1,
+        "mana_surge": 2,
+        "warrior_axe_attack": 8,
+        "warrior_block": 6,
+        "warrior_sweep": 2
+      },
+      "cards_played_total": 19,
+      "damage_taken_events": 13,
+      "encounter_enemies": [
+        "Golem",
+        "Ghost",
+        "Wolf"
+      ],
+      "encounter_signature": "Ghost + Golem + Wolf",
+      "invariant_errors": [],
+      "match_index": 35,
+      "outcome": "WIN",
+      "player_final_hp": 34,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.95,
+      "qte_stats_by_id": {
+        "adda_swap_health": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Defensive",
+      "turns": 8
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_sweep -> Sweep AoE (9 total dmg, 0 kills)",
+        "T1: END_TURN (Remaining playable cards have negative tactical value (best=-100.0))",
+        "T2: PLAY warrior_block -> Block 5 incoming damage (unblocked=15)",
+        "T2: PLAY wssws_blood_ritual -> Blood Ritual Ult (+22 HP, -7/turn)",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf [LETHAL]",
+        "T2: END_TURN (No playable cards with remaining mana (0))",
+        "T3: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T3: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost [LETHAL]"
+      ],
+      "block_from_cards": 5,
+      "cards_drawn_by_id": {
+        "adda_swap_health": 1,
+        "mana_surge": 1,
+        "warrior_axe_attack": 4,
+        "warrior_block": 2,
+        "warrior_sweep": 3,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_by_id": {
+        "warrior_axe_attack": 4,
+        "warrior_block": 1,
+        "warrior_sweep": 1,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_total": 7,
+      "damage_taken_events": 4,
+      "encounter_enemies": [
+        "Ghost",
+        "Gob",
+        "Wolf"
+      ],
+      "encounter_signature": "Ghost + Gob + Wolf",
+      "invariant_errors": [],
+      "match_index": 36,
+      "outcome": "WIN",
+      "player_final_hp": 36,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.95,
+      "qte_stats_by_id": {
+        "wssws_blood_ritual": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Defensive",
+      "turns": 3
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_sweep -> Sweep AoE (9 total dmg, 0 kills)",
+        "T1: PLAY warrior_block -> Block 5 incoming damage (unblocked=26)",
+        "T1: END_TURN (No playable cards with remaining mana (0))",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf",
+        "T2: PLAY warrior_block -> Block 5 incoming damage (unblocked=8)",
+        "T2: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T2: END_TURN (Remaining playable cards have negative tactical value (best=-110.0))",
+        "T3: PLAY adda_swap_health -> Swap HP Ult (Player 21->45, Enemies sum 47->22)",
+        "T3: PLAY warrior_block -> Block 5 incoming damage (unblocked=12)",
+        "T3: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T3: PLAY warrior_sweep -> Sweep AoE (6 total dmg, 1 kills)",
+        "T3: END_TURN (No playable cards with remaining mana (1))",
+        "T4: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf",
+        "T4: PLAY warrior_block -> Block 5 incoming damage (unblocked=8)",
+        "T4: END_TURN (Remaining playable cards have negative tactical value (best=-7.7))",
+        "T5: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf",
+        "T5: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf [LETHAL]"
+      ],
+      "block_from_cards": 20,
+      "cards_drawn_by_id": {
+        "adda_swap_health": 1,
+        "last_gasp": 1,
+        "mana_surge": 3,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 5,
+        "warrior_block": 4,
+        "warrior_sweep": 4,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_by_id": {
+        "adda_swap_health": 1,
+        "mana_surge": 1,
+        "warrior_axe_attack": 5,
+        "warrior_block": 4,
+        "warrior_sweep": 2
+      },
+      "cards_played_total": 13,
+      "damage_taken_events": 6,
+      "encounter_enemies": [
+        "Wolf",
+        "Golem",
+        "Gob"
+      ],
+      "encounter_signature": "Gob + Golem + Wolf",
+      "invariant_errors": [],
+      "match_index": 37,
+      "outcome": "WIN",
+      "player_final_hp": 39,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.7,
+      "qte_stats_by_id": {
+        "adda_swap_health": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Human_Sim_70QTE",
+      "turns": 5
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T1: PLAY warrior_sweep -> Sweep AoE (9 total dmg, 0 kills)",
+        "T1: END_TURN (Remaining playable cards have negative tactical value (best=-109.0))",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf",
+        "T2: PLAY warrior_block -> Block 5 incoming damage (unblocked=15)",
+        "T2: END_TURN (Remaining playable cards have negative tactical value (best=-11.6))",
+        "T3: PLAY warrior_block -> Block 5 incoming damage (unblocked=8)",
+        "T3: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost [LETHAL]",
+        "T3: PLAY warrior_block -> Block 3 incoming damage (unblocked=3)",
+        "T3: END_TURN (Remaining playable cards have negative tactical value (best=-199.5))",
+        "T4: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf",
+        "T4: PLAY warrior_sweep -> Sweep AoE (3 total dmg, 0 kills)",
+        "T4: END_TURN (No playable cards with remaining mana (0))",
+        "T5: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf [LETHAL]"
+      ],
+      "block_from_cards": 15,
+      "cards_drawn_by_id": {
+        "adda_swap_health": 1,
+        "last_gasp": 1,
+        "mana_surge": 3,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 5,
+        "warrior_block": 4,
+        "warrior_sweep": 4,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_by_id": {
+        "warrior_axe_attack": 5,
+        "warrior_block": 3,
+        "warrior_sweep": 2
+      },
+      "cards_played_total": 10,
+      "damage_taken_events": 7,
+      "encounter_enemies": [
+        "Wolf",
+        "Gob",
+        "Ghost"
+      ],
+      "encounter_signature": "Ghost + Gob + Wolf",
+      "invariant_errors": [],
+      "match_index": 38,
+      "outcome": "WIN",
+      "player_final_hp": 5,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.7,
+      "qte_stats_by_id": {},
+      "remaining_enemy_hp": 0,
+      "strategy": "Human_Sim_70QTE",
+      "turns": 5
+    },
+    {
+      "action_trace": [
+        "T1: PLAY nuke_30_kill_streak -> Tactical Nuke Ult! Player survives (45->15 HP) & deals 30 AoE true dmg"
+      ],
+      "block_from_cards": 0,
+      "cards_drawn_by_id": {
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 1,
+        "warrior_block": 1,
+        "warrior_sweep": 1
+      },
+      "cards_played_by_id": {
+        "nuke_30_kill_streak": 1
+      },
+      "cards_played_total": 1,
+      "damage_taken_events": 1,
+      "encounter_enemies": [
+        "Golem",
+        "Gob",
+        "Wolf"
+      ],
+      "encounter_signature": "Gob + Golem + Wolf",
+      "invariant_errors": [],
+      "match_index": 39,
+      "outcome": "LOSE",
+      "player_final_hp": 0,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.7,
+      "qte_stats_by_id": {
+        "nuke_30_kill_streak": {
+          "attempts": 1,
+          "failures": 1,
+          "successes": 0
+        }
+      },
+      "remaining_enemy_hp": 57,
+      "strategy": "Human_Sim_70QTE",
+      "turns": 1
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_block -> Block 5 incoming damage (unblocked=15)",
+        "T1: PLAY warrior_sweep -> Sweep AoE (9 total dmg, 0 kills)",
+        "T1: END_TURN (No playable cards with remaining mana (0))",
+        "T2: PLAY nuke_30_kill_streak -> Tactical Nuke Ult! Player survives (35->5 HP) & deals 30 AoE true dmg"
+      ],
+      "block_from_cards": 5,
+      "cards_drawn_by_id": {
+        "mana_surge": 2,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 1,
+        "warrior_block": 2,
+        "warrior_sweep": 2
+      },
+      "cards_played_by_id": {
+        "nuke_30_kill_streak": 1,
+        "warrior_block": 1,
+        "warrior_sweep": 1
+      },
+      "cards_played_total": 3,
+      "damage_taken_events": 3,
+      "encounter_enemies": [
+        "Wolf",
+        "Ghost",
+        "Gob"
+      ],
+      "encounter_signature": "Ghost + Gob + Wolf",
+      "invariant_errors": [],
+      "match_index": 40,
+      "outcome": "WIN",
+      "player_final_hp": 5,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.7,
+      "qte_stats_by_id": {
+        "nuke_30_kill_streak": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Human_Sim_70QTE",
+      "turns": 2
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_block -> Block 5 incoming damage (unblocked=15)",
+        "T1: PLAY warrior_sweep -> Sweep AoE (9 total dmg, 0 kills)",
+        "T1: END_TURN (Remaining playable cards have negative tactical value (best=-94.3))",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf [LETHAL]",
+        "T2: END_TURN (Remaining playable cards have negative tactical value (best=-21.7))",
+        "T3: PLAY warrior_axe_attack -> Axe 6 dmg -> Gob",
+        "T3: PLAY warrior_sweep -> Sweep AoE (6 total dmg, 1 kills)",
+        "T3: END_TURN (Remaining playable cards have negative tactical value (best=-87.7))",
+        "T4: END_TURN (Remaining playable cards have negative tactical value (best=-3.2))",
+        "T5: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T5: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T5: END_TURN (Remaining playable cards have negative tactical value (best=-14.9))",
+        "T6: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T6: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T6: END_TURN (Remaining playable cards have negative tactical value (best=-6.1))",
+        "T7: PLAY warrior_block -> Block 5 incoming damage (unblocked=7)",
+        "T7: PLAY warrior_block -> Block 2 incoming damage (unblocked=2)",
+        "T7: END_TURN (Remaining playable cards have negative tactical value (best=-15.1))",
+        "T8: PLAY last_gasp -> Last Gasp Ult enables immediate 3x LETHAL",
+        "T8: PLAY warrior_axe_attack -> Axe 18 dmg -> Ghost [LETHAL]"
+      ],
+      "block_from_cards": 15,
+      "cards_drawn_by_id": {
+        "adda_swap_health": 2,
+        "last_gasp": 2,
+        "mana_surge": 4,
+        "nuke_30_kill_streak": 2,
+        "warrior_axe_attack": 9,
+        "warrior_block": 6,
+        "warrior_sweep": 6,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_by_id": {
+        "last_gasp": 1,
+        "warrior_axe_attack": 8,
+        "warrior_block": 3,
+        "warrior_sweep": 2
+      },
+      "cards_played_total": 14,
+      "damage_taken_events": 3,
+      "encounter_enemies": [
+        "Gob",
+        "Wolf",
+        "Ghost"
+      ],
+      "encounter_signature": "Ghost + Gob + Wolf",
+      "invariant_errors": [],
+      "match_index": 41,
+      "outcome": "WIN",
+      "player_final_hp": 5,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.7,
+      "qte_stats_by_id": {
+        "last_gasp": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Human_Sim_70QTE",
+      "turns": 8
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf",
+        "T1: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf [LETHAL]",
+        "T1: END_TURN (Remaining playable cards have negative tactical value (best=-21.6))",
+        "T2: PLAY warrior_block -> Block 5 incoming damage (unblocked=18)",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T2: PLAY warrior_block -> Block 5 incoming damage (unblocked=13)",
+        "T2: END_TURN (No playable cards with remaining mana (0))",
+        "T3: PLAY nuke_30_kill_streak -> Tactical Nuke Ult! Player survives (37->7 HP) & deals 30 AoE true dmg"
+      ],
+      "block_from_cards": 10,
+      "cards_drawn_by_id": {
+        "mana_surge": 1,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 5,
+        "warrior_block": 3,
+        "warrior_sweep": 2
+      },
+      "cards_played_by_id": {
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 3,
+        "warrior_block": 2
+      },
+      "cards_played_total": 6,
+      "damage_taken_events": 3,
+      "encounter_enemies": [
+        "Gob",
+        "Golem",
+        "Wolf"
+      ],
+      "encounter_signature": "Gob + Golem + Wolf",
+      "invariant_errors": [],
+      "match_index": 42,
+      "outcome": "LOSE",
+      "player_final_hp": 0,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.7,
+      "qte_stats_by_id": {
+        "nuke_30_kill_streak": {
+          "attempts": 1,
+          "failures": 1,
+          "successes": 0
+        }
+      },
+      "remaining_enemy_hp": 34,
+      "strategy": "Human_Sim_70QTE",
+      "turns": 3
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_axe_attack -> Axe 6 dmg -> Gob",
+        "T1: PLAY warrior_sweep -> Sweep AoE (9 total dmg, 1 kills)",
+        "T1: END_TURN (No playable cards with remaining mana (0))",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf [LETHAL]",
+        "T2: PLAY warrior_block -> Block 4 incoming damage (unblocked=4)",
+        "T2: END_TURN (Remaining playable cards have negative tactical value (best=-113.7))",
+        "T3: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T3: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T3: END_TURN (Remaining playable cards have negative tactical value (best=-29.6))",
+        "T4: PLAY wssws_blood_ritual -> Blood Ritual Ult (+12 HP, -7/turn)",
+        "T4: PLAY warrior_sweep -> Sweep AoE (3 total dmg, 0 kills)",
+        "T4: END_TURN (Remaining playable cards have negative tactical value (best=-3.9))",
+        "T5: PLAY nuke_30_kill_streak -> Tactical Nuke Ult! Player survives (38->8 HP) & deals 30 AoE true dmg",
+        "T5: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem [LETHAL]"
+      ],
+      "block_from_cards": 5,
+      "cards_drawn_by_id": {
+        "last_gasp": 1,
+        "mana_surge": 3,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 5,
+        "warrior_block": 4,
+        "warrior_sweep": 4,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_by_id": {
+        "mana_surge": 2,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 4,
+        "warrior_block": 1,
+        "warrior_sweep": 2,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_total": 11,
+      "damage_taken_events": 4,
+      "encounter_enemies": [
+        "Wolf",
+        "Golem",
+        "Gob"
+      ],
+      "encounter_signature": "Gob + Golem + Wolf",
+      "invariant_errors": [],
+      "match_index": 43,
+      "outcome": "WIN",
+      "player_final_hp": 8,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.7,
+      "qte_stats_by_id": {
+        "nuke_30_kill_streak": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        },
+        "wssws_blood_ritual": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Human_Sim_70QTE",
+      "turns": 5
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T1: PLAY warrior_sweep -> Sweep AoE (9 total dmg, 0 kills)",
+        "T1: END_TURN (No playable cards with remaining mana (0))",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf",
+        "T2: PLAY warrior_sweep -> Sweep AoE (6 total dmg, 0 kills)",
+        "T2: END_TURN (Remaining playable cards have negative tactical value (best=-198.8))",
+        "T3: PLAY warrior_block -> Block 5 incoming damage (unblocked=8)",
+        "T3: PLAY warrior_block -> Block 3 incoming damage (unblocked=3)",
+        "T3: PLAY wssws_blood_ritual -> Blood Ritual Ult (+15 HP, -7/turn)",
+        "T3: END_TURN (Remaining playable cards have negative tactical value (best=-12.4))",
+        "T4: PLAY warrior_block -> Block 5 incoming damage (unblocked=15)",
+        "T4: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf",
+        "T4: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf [LETHAL]",
+        "T4: END_TURN (No playable cards with remaining mana (0))",
+        "T5: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost [LETHAL]"
+      ],
+      "block_from_cards": 15,
+      "cards_drawn_by_id": {
+        "adda_swap_health": 1,
+        "mana_surge": 3,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 5,
+        "warrior_block": 4,
+        "warrior_sweep": 4,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_by_id": {
+        "warrior_axe_attack": 5,
+        "warrior_block": 3,
+        "warrior_sweep": 2,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_total": 11,
+      "damage_taken_events": 6,
+      "encounter_enemies": [
+        "Ghost",
+        "Gob",
+        "Wolf"
+      ],
+      "encounter_signature": "Ghost + Gob + Wolf",
+      "invariant_errors": [],
+      "match_index": 44,
+      "outcome": "WIN",
+      "player_final_hp": 14,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.7,
+      "qte_stats_by_id": {
+        "wssws_blood_ritual": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Human_Sim_70QTE",
+      "turns": 5
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_axe_attack -> Axe 6 dmg -> Gob",
+        "T1: PLAY warrior_sweep -> Sweep AoE (9 total dmg, 1 kills)",
+        "T1: END_TURN (Remaining playable cards have negative tactical value (best=-105.1))",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf [LETHAL]",
+        "T2: PLAY warrior_block -> Block 4 incoming damage (unblocked=4)",
+        "T2: END_TURN (No playable cards with remaining mana (0))",
+        "T3: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T3: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T3: END_TURN (Remaining playable cards have negative tactical value (best=-25.3))",
+        "T4: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T4: PLAY warrior_block -> Block 4 incoming damage (unblocked=4)",
+        "T4: END_TURN (Remaining playable cards have negative tactical value (best=-1.9))",
+        "T5: PLAY nuke_30_kill_streak -> Tactical Nuke Ult! Player survives (33->3 HP) & deals 30 AoE true dmg",
+        "T5: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem [LETHAL]"
+      ],
+      "block_from_cards": 10,
+      "cards_drawn_by_id": {
+        "adda_swap_health": 1,
+        "last_gasp": 1,
+        "mana_surge": 3,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 5,
+        "warrior_block": 4,
+        "warrior_sweep": 4
+      },
+      "cards_played_by_id": {
+        "mana_surge": 2,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 5,
+        "warrior_block": 2,
+        "warrior_sweep": 1
+      },
+      "cards_played_total": 11,
+      "damage_taken_events": 4,
+      "encounter_enemies": [
+        "Gob",
+        "Golem",
+        "Wolf"
+      ],
+      "encounter_signature": "Gob + Golem + Wolf",
+      "invariant_errors": [],
+      "match_index": 45,
+      "outcome": "WIN",
+      "player_final_hp": 3,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.7,
+      "qte_stats_by_id": {
+        "nuke_30_kill_streak": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Human_Sim_70QTE",
+      "turns": 5
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_block -> Block 5 incoming damage (unblocked=12)",
+        "T1: PLAY warrior_block -> Block 5 incoming damage (unblocked=7)",
+        "T1: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T1: END_TURN (Remaining playable cards have negative tactical value (best=-85.4))",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf [LETHAL]",
+        "T2: PLAY warrior_block -> Block 5 incoming damage (unblocked=18)",
+        "T2: END_TURN (Remaining playable cards have negative tactical value (best=-98.2))",
+        "T3: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T3: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T3: END_TURN (Remaining playable cards have negative tactical value (best=-194.5))",
+        "T4: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T4: PLAY warrior_sweep -> Sweep AoE (3 total dmg, 0 kills)",
+        "T4: END_TURN (Remaining playable cards have negative tactical value (best=-112.4))",
+        "T5: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T5: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T5: PLAY warrior_sweep -> Sweep AoE (3 total dmg, 0 kills)",
+        "T5: END_TURN (No playable cards with remaining mana (1))",
+        "T6: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T6: PLAY warrior_sweep -> Sweep AoE (3 total dmg, 0 kills)",
+        "T6: PLAY warrior_sweep -> Sweep AoE (3 total dmg, 0 kills)",
+        "T6: END_TURN (No playable cards with remaining mana (0))",
+        "T7: PLAY last_gasp -> Last Gasp Ult enables immediate 3x LETHAL",
+        "T7: PLAY warrior_axe_attack -> Axe 18 dmg -> Golem [LETHAL]"
+      ],
+      "block_from_cards": 15,
+      "cards_drawn_by_id": {
+        "adda_swap_health": 1,
+        "last_gasp": 2,
+        "mana_surge": 4,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 7,
+        "warrior_block": 6,
+        "warrior_sweep": 6,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_by_id": {
+        "last_gasp": 1,
+        "mana_surge": 3,
+        "warrior_axe_attack": 7,
+        "warrior_block": 3,
+        "warrior_sweep": 4
+      },
+      "cards_played_total": 18,
+      "damage_taken_events": 6,
+      "encounter_enemies": [
+        "Gob",
+        "Wolf",
+        "Golem"
+      ],
+      "encounter_signature": "Gob + Golem + Wolf",
+      "invariant_errors": [],
+      "match_index": 46,
+      "outcome": "WIN",
+      "player_final_hp": 5,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.7,
+      "qte_stats_by_id": {
+        "last_gasp": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Human_Sim_70QTE",
+      "turns": 7
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_axe_attack -> Axe 6 dmg -> Gob",
+        "T1: PLAY warrior_axe_attack -> Axe 6 dmg -> Gob [LETHAL]",
+        "T1: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T1: END_TURN (No playable cards with remaining mana (0))",
+        "T2: PLAY nuke_30_kill_streak -> Tactical Nuke Ult! Player survives (37->7 HP) & deals 30 AoE true dmg"
+      ],
+      "block_from_cards": 0,
+      "cards_drawn_by_id": {
+        "mana_surge": 3,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 2,
+        "warrior_block": 1,
+        "warrior_sweep": 1
+      },
+      "cards_played_by_id": {
+        "mana_surge": 1,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 2
+      },
+      "cards_played_total": 4,
+      "damage_taken_events": 3,
+      "encounter_enemies": [
+        "Wolf",
+        "Gob",
+        "Ghost"
+      ],
+      "encounter_signature": "Ghost + Gob + Wolf",
+      "invariant_errors": [],
+      "match_index": 47,
+      "outcome": "WIN",
+      "player_final_hp": 7,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.7,
+      "qte_stats_by_id": {
+        "nuke_30_kill_streak": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Human_Sim_70QTE",
+      "turns": 2
+    },
+    {
+      "action_trace": [
+        "T1: PLAY adda_swap_health -> Swap HP Ult (Player 45->45, Enemies sum 60->45)",
+        "T1: PLAY warrior_block -> Block 5 incoming damage (unblocked=12)",
+        "T1: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T1: PLAY mana_surge -> Bank +2 overflow mana for next turn",
+        "T1: END_TURN (No playable cards with remaining mana (0))",
+        "T2: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T2: PLAY warrior_block -> Block 5 incoming damage (unblocked=12)",
+        "T2: PLAY warrior_sweep -> Sweep AoE (9 total dmg, 0 kills)",
+        "T2: END_TURN (Remaining playable cards have negative tactical value (best=-109.6))",
+        "T3: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf",
+        "T3: PLAY warrior_axe_attack -> Axe 6 dmg -> Wolf [LETHAL]",
+        "T3: PLAY wssws_blood_ritual -> Blood Ritual Ult (+14 HP, -7/turn)",
+        "T3: END_TURN (No playable cards with remaining mana (1))",
+        "T4: PLAY warrior_block -> Block 4 incoming damage (unblocked=4)",
+        "T4: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T4: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem",
+        "T4: END_TURN (No playable cards with remaining mana (0))",
+        "T5: PLAY warrior_sweep -> Sweep AoE (6 total dmg, 0 kills)",
+        "T5: END_TURN (Remaining playable cards have negative tactical value (best=-15.3))",
+        "T6: PLAY warrior_axe_attack -> Axe 6 dmg -> Golem (redirected to Taunt Golem) [LETHAL]",
+        "T6: PLAY warrior_sweep -> Sweep AoE (3 total dmg, 0 kills)",
+        "T6: END_TURN (No playable cards with remaining mana (0))",
+        "T7: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T7: END_TURN (Remaining playable cards have negative tactical value (best=-2.9))",
+        "T8: PLAY warrior_sweep -> Sweep AoE (3 total dmg, 0 kills)",
+        "T8: END_TURN (Remaining playable cards have negative tactical value (best=-10.2))",
+        "T9: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost",
+        "T9: PLAY warrior_axe_attack -> Axe 6 dmg -> Ghost [LETHAL]"
+      ],
+      "block_from_cards": 15,
+      "cards_drawn_by_id": {
+        "adda_swap_health": 2,
+        "last_gasp": 1,
+        "mana_surge": 6,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 9,
+        "warrior_block": 8,
+        "warrior_sweep": 8,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_by_id": {
+        "adda_swap_health": 1,
+        "mana_surge": 2,
+        "warrior_axe_attack": 9,
+        "warrior_block": 3,
+        "warrior_sweep": 4,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_total": 20,
+      "damage_taken_events": 7,
+      "encounter_enemies": [
+        "Ghost",
+        "Golem",
+        "Wolf"
+      ],
+      "encounter_signature": "Ghost + Golem + Wolf",
+      "invariant_errors": [],
+      "match_index": 48,
+      "outcome": "WIN",
+      "player_final_hp": 2,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.7,
+      "qte_stats_by_id": {
+        "adda_swap_health": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        },
+        "wssws_blood_ritual": {
+          "attempts": 1,
+          "failures": 1,
+          "successes": 0
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Human_Sim_70QTE",
+      "turns": 9
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_sweep -> Random fuzz pick: warrior_sweep",
+        "T1: PLAY mana_surge -> Random fuzz pick: mana_surge",
+        "T1: END_TURN (No playable cards with remaining mana (0))",
+        "T2: PLAY warrior_block -> Random fuzz pick: warrior_block",
+        "T2: PLAY warrior_sweep -> Random fuzz pick: warrior_sweep",
+        "T2: PLAY nuke_30_kill_streak -> Random fuzz pick: nuke_30_kill_streak"
+      ],
+      "block_from_cards": 5,
+      "cards_drawn_by_id": {
+        "mana_surge": 1,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 1,
+        "warrior_block": 2,
+        "warrior_sweep": 3
+      },
+      "cards_played_by_id": {
+        "mana_surge": 1,
+        "nuke_30_kill_streak": 1,
+        "warrior_block": 1,
+        "warrior_sweep": 2
+      },
+      "cards_played_total": 5,
+      "damage_taken_events": 4,
+      "encounter_enemies": [
+        "Wolf",
+        "Ghost",
+        "Gob"
+      ],
+      "encounter_signature": "Ghost + Gob + Wolf",
+      "invariant_errors": [],
+      "match_index": 49,
+      "outcome": "LOSE",
+      "player_final_hp": 0,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.45,
+      "qte_stats_by_id": {
+        "nuke_30_kill_streak": {
+          "attempts": 1,
+          "failures": 1,
+          "successes": 0
+        }
+      },
+      "remaining_enemy_hp": 15,
+      "strategy": "Random_Fuzz",
+      "turns": 2
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_sweep -> Random fuzz pick: warrior_sweep",
+        "T1: PLAY last_gasp -> Random fuzz pick: last_gasp",
+        "T1: PLAY warrior_axe_attack -> Random fuzz pick: warrior_axe_attack",
+        "T1: END_TURN (No playable cards with remaining mana (0))"
+      ],
+      "block_from_cards": 0,
+      "cards_drawn_by_id": {
+        "last_gasp": 1,
+        "mana_surge": 1,
+        "warrior_axe_attack": 1,
+        "warrior_sweep": 1
+      },
+      "cards_played_by_id": {
+        "last_gasp": 1,
+        "warrior_axe_attack": 1,
+        "warrior_sweep": 1
+      },
+      "cards_played_total": 3,
+      "damage_taken_events": 3,
+      "encounter_enemies": [
+        "Golem",
+        "Gob",
+        "Wolf"
+      ],
+      "encounter_signature": "Gob + Golem + Wolf",
+      "invariant_errors": [],
+      "match_index": 50,
+      "outcome": "LOSE",
+      "player_final_hp": 0,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.45,
+      "qte_stats_by_id": {
+        "last_gasp": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 47,
+      "strategy": "Random_Fuzz",
+      "turns": 1
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_sweep -> Random fuzz pick: warrior_sweep",
+        "T1: PLAY nuke_30_kill_streak -> Random fuzz pick: nuke_30_kill_streak",
+        "T1: PLAY mana_surge -> Random fuzz pick: mana_surge",
+        "T1: END_TURN (No playable cards with remaining mana (0))",
+        "T2: PLAY warrior_axe_attack -> Random fuzz pick: warrior_axe_attack",
+        "T2: PLAY warrior_sweep -> Random fuzz pick: warrior_sweep"
+      ],
+      "block_from_cards": 0,
+      "cards_drawn_by_id": {
+        "adda_swap_health": 1,
+        "mana_surge": 2,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 1,
+        "warrior_block": 1,
+        "warrior_sweep": 2
+      },
+      "cards_played_by_id": {
+        "mana_surge": 1,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 1,
+        "warrior_sweep": 2
+      },
+      "cards_played_total": 5,
+      "damage_taken_events": 1,
+      "encounter_enemies": [
+        "Ghost",
+        "Golem",
+        "Gob"
+      ],
+      "encounter_signature": "Ghost + Gob + Golem",
+      "invariant_errors": [],
+      "match_index": 51,
+      "outcome": "WIN",
+      "player_final_hp": 15,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.45,
+      "qte_stats_by_id": {
+        "nuke_30_kill_streak": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Random_Fuzz",
+      "turns": 2
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_axe_attack -> Random fuzz pick: warrior_axe_attack",
+        "T1: PLAY warrior_block -> Random fuzz pick: warrior_block",
+        "T1: PLAY warrior_axe_attack -> Random fuzz pick: warrior_axe_attack",
+        "T1: END_TURN (No playable cards with remaining mana (0))",
+        "T2: PLAY warrior_sweep -> Random fuzz pick: warrior_sweep",
+        "T2: PLAY mana_surge -> Random fuzz pick: mana_surge",
+        "T2: END_TURN (No playable cards with remaining mana (0))",
+        "T3: PLAY warrior_block -> Random fuzz pick: warrior_block",
+        "T3: PLAY mana_surge -> Random fuzz pick: mana_surge",
+        "T3: PLAY adda_swap_health -> Random fuzz pick: adda_swap_health",
+        "T3: PLAY mana_surge -> Random fuzz pick: mana_surge",
+        "T3: END_TURN (No playable cards with remaining mana (2))",
+        "T4: PLAY warrior_block -> Random fuzz pick: warrior_block",
+        "T4: PLAY nuke_30_kill_streak -> Random fuzz pick: nuke_30_kill_streak"
+      ],
+      "block_from_cards": 15,
+      "cards_drawn_by_id": {
+        "adda_swap_health": 1,
+        "mana_surge": 3,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 4,
+        "warrior_block": 4,
+        "warrior_sweep": 3
+      },
+      "cards_played_by_id": {
+        "adda_swap_health": 1,
+        "mana_surge": 3,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 2,
+        "warrior_block": 3,
+        "warrior_sweep": 1
+      },
+      "cards_played_total": 11,
+      "damage_taken_events": 10,
+      "encounter_enemies": [
+        "Ghost",
+        "Wolf",
+        "Gob"
+      ],
+      "encounter_signature": "Ghost + Gob + Wolf",
+      "invariant_errors": [],
+      "match_index": 52,
+      "outcome": "LOSE",
+      "player_final_hp": 0,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.45,
+      "qte_stats_by_id": {
+        "adda_swap_health": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        },
+        "nuke_30_kill_streak": {
+          "attempts": 1,
+          "failures": 1,
+          "successes": 0
+        }
+      },
+      "remaining_enemy_hp": 17,
+      "strategy": "Random_Fuzz",
+      "turns": 4
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_block -> Random fuzz pick: warrior_block",
+        "T1: PLAY warrior_sweep -> Random fuzz pick: warrior_sweep",
+        "T1: PLAY last_gasp -> Random fuzz pick: last_gasp",
+        "T1: END_TURN (No playable cards with remaining mana (0))"
+      ],
+      "block_from_cards": 5,
+      "cards_drawn_by_id": {
+        "last_gasp": 1,
+        "warrior_block": 2,
+        "warrior_sweep": 1
+      },
+      "cards_played_by_id": {
+        "last_gasp": 1,
+        "warrior_block": 1,
+        "warrior_sweep": 1
+      },
+      "cards_played_total": 3,
+      "damage_taken_events": 2,
+      "encounter_enemies": [
+        "Gob",
+        "Ghost",
+        "Wolf"
+      ],
+      "encounter_signature": "Ghost + Gob + Wolf",
+      "invariant_errors": [],
+      "match_index": 53,
+      "outcome": "LOSE",
+      "player_final_hp": 0,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.45,
+      "qte_stats_by_id": {
+        "last_gasp": {
+          "attempts": 1,
+          "failures": 1,
+          "successes": 0
+        }
+      },
+      "remaining_enemy_hp": 14,
+      "strategy": "Random_Fuzz",
+      "turns": 1
+    },
+    {
+      "action_trace": [
+        "T1: PLAY mana_surge -> Random fuzz pick: mana_surge",
+        "T1: PLAY nuke_30_kill_streak -> Random fuzz pick: nuke_30_kill_streak"
+      ],
+      "block_from_cards": 0,
+      "cards_drawn_by_id": {
+        "mana_surge": 1,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 1,
+        "warrior_block": 1
+      },
+      "cards_played_by_id": {
+        "mana_surge": 1,
+        "nuke_30_kill_streak": 1
+      },
+      "cards_played_total": 2,
+      "damage_taken_events": 1,
+      "encounter_enemies": [
+        "Ghost",
+        "Gob",
+        "Golem"
+      ],
+      "encounter_signature": "Ghost + Gob + Golem",
+      "invariant_errors": [],
+      "match_index": 54,
+      "outcome": "LOSE",
+      "player_final_hp": 0,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.45,
+      "qte_stats_by_id": {
+        "nuke_30_kill_streak": {
+          "attempts": 1,
+          "failures": 1,
+          "successes": 0
+        }
+      },
+      "remaining_enemy_hp": 57,
+      "strategy": "Random_Fuzz",
+      "turns": 1
+    },
+    {
+      "action_trace": [
+        "T1: PLAY last_gasp -> Random fuzz pick: last_gasp",
+        "T1: PLAY warrior_axe_attack -> Random fuzz pick: warrior_axe_attack",
+        "T1: PLAY mana_surge -> Random fuzz pick: mana_surge",
+        "T1: PLAY mana_surge -> Random fuzz pick: mana_surge",
+        "T1: END_TURN (No playable cards with remaining mana (0))"
+      ],
+      "block_from_cards": 0,
+      "cards_drawn_by_id": {
+        "last_gasp": 1,
+        "mana_surge": 2,
+        "warrior_axe_attack": 1
+      },
+      "cards_played_by_id": {
+        "last_gasp": 1,
+        "mana_surge": 2,
+        "warrior_axe_attack": 1
+      },
+      "cards_played_total": 4,
+      "damage_taken_events": 3,
+      "encounter_enemies": [
+        "Golem",
+        "Gob",
+        "Ghost"
+      ],
+      "encounter_signature": "Ghost + Gob + Golem",
+      "invariant_errors": [],
+      "match_index": 55,
+      "outcome": "LOSE",
+      "player_final_hp": 0,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.45,
+      "qte_stats_by_id": {
+        "last_gasp": {
+          "attempts": 1,
+          "failures": 1,
+          "successes": 0
+        }
+      },
+      "remaining_enemy_hp": 51,
+      "strategy": "Random_Fuzz",
+      "turns": 1
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_sweep -> Random fuzz pick: warrior_sweep",
+        "T1: PLAY warrior_block -> Random fuzz pick: warrior_block",
+        "T1: END_TURN (No playable cards with remaining mana (0))",
+        "T2: PLAY mana_surge -> Random fuzz pick: mana_surge",
+        "T2: PLAY warrior_axe_attack -> Random fuzz pick: warrior_axe_attack",
+        "T2: PLAY warrior_block -> Random fuzz pick: warrior_block",
+        "T2: END_TURN (No playable cards with remaining mana (0))",
+        "T3: PLAY adda_swap_health -> Random fuzz pick: adda_swap_health",
+        "T3: PLAY warrior_sweep -> Random fuzz pick: warrior_sweep",
+        "T3: PLAY mana_surge -> Random fuzz pick: mana_surge",
+        "T3: PLAY mana_surge -> Random fuzz pick: mana_surge",
+        "T3: END_TURN (No playable cards with remaining mana (1))",
+        "T4: PLAY nuke_30_kill_streak -> Random fuzz pick: nuke_30_kill_streak"
+      ],
+      "block_from_cards": 10,
+      "cards_drawn_by_id": {
+        "adda_swap_health": 1,
+        "mana_surge": 3,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 4,
+        "warrior_block": 3,
+        "warrior_sweep": 4
+      },
+      "cards_played_by_id": {
+        "adda_swap_health": 1,
+        "mana_surge": 3,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 1,
+        "warrior_block": 2,
+        "warrior_sweep": 2
+      },
+      "cards_played_total": 10,
+      "damage_taken_events": 7,
+      "encounter_enemies": [
+        "Gob",
+        "Wolf",
+        "Ghost"
+      ],
+      "encounter_signature": "Ghost + Gob + Wolf",
+      "invariant_errors": [],
+      "match_index": 56,
+      "outcome": "OBLITERATED",
+      "player_final_hp": 0,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.45,
+      "qte_stats_by_id": {
+        "adda_swap_health": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        },
+        "nuke_30_kill_streak": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Random_Fuzz",
+      "turns": 4
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_axe_attack -> Random fuzz pick: warrior_axe_attack",
+        "T1: PLAY adda_swap_health -> Random fuzz pick: adda_swap_health",
+        "T1: PLAY warrior_axe_attack -> Random fuzz pick: warrior_axe_attack",
+        "T1: PLAY warrior_block -> Random fuzz pick: warrior_block",
+        "T1: END_TURN (No playable cards with remaining mana (0))",
+        "T2: PLAY wssws_blood_ritual -> Random fuzz pick: wssws_blood_ritual",
+        "T2: PLAY warrior_block -> Random fuzz pick: warrior_block",
+        "T2: PLAY warrior_axe_attack -> Random fuzz pick: warrior_axe_attack",
+        "T2: PLAY warrior_axe_attack -> Random fuzz pick: warrior_axe_attack",
+        "T2: END_TURN (No playable cards with remaining mana (0))",
+        "T3: PLAY warrior_sweep -> Random fuzz pick: warrior_sweep",
+        "T3: PLAY warrior_block -> Random fuzz pick: warrior_block",
+        "T3: PLAY last_gasp -> Random fuzz pick: last_gasp",
+        "T3: END_TURN (No playable cards with remaining mana (0))"
+      ],
+      "block_from_cards": 15,
+      "cards_drawn_by_id": {
+        "adda_swap_health": 1,
+        "last_gasp": 1,
+        "warrior_axe_attack": 4,
+        "warrior_block": 3,
+        "warrior_sweep": 2,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_by_id": {
+        "adda_swap_health": 1,
+        "last_gasp": 1,
+        "warrior_axe_attack": 4,
+        "warrior_block": 3,
+        "warrior_sweep": 1,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_total": 11,
+      "damage_taken_events": 7,
+      "encounter_enemies": [
+        "Wolf",
+        "Golem",
+        "Ghost"
+      ],
+      "encounter_signature": "Ghost + Golem + Wolf",
+      "invariant_errors": [],
+      "match_index": 57,
+      "outcome": "LOSE",
+      "player_final_hp": 0,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.45,
+      "qte_stats_by_id": {
+        "adda_swap_health": {
+          "attempts": 1,
+          "failures": 1,
+          "successes": 0
+        },
+        "last_gasp": {
+          "attempts": 1,
+          "failures": 1,
+          "successes": 0
+        },
+        "wssws_blood_ritual": {
+          "attempts": 1,
+          "failures": 1,
+          "successes": 0
+        }
+      },
+      "remaining_enemy_hp": 41,
+      "strategy": "Random_Fuzz",
+      "turns": 3
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_sweep -> Random fuzz pick: warrior_sweep",
+        "T1: PLAY warrior_block -> Random fuzz pick: warrior_block",
+        "T1: PLAY adda_swap_health -> Random fuzz pick: adda_swap_health",
+        "T1: END_TURN (No playable cards with remaining mana (0))",
+        "T2: PLAY mana_surge -> Random fuzz pick: mana_surge",
+        "T2: PLAY warrior_axe_attack -> Random fuzz pick: warrior_axe_attack",
+        "T2: PLAY warrior_block -> Random fuzz pick: warrior_block",
+        "T2: END_TURN (No playable cards with remaining mana (0))",
+        "T3: PLAY wssws_blood_ritual -> Random fuzz pick: wssws_blood_ritual",
+        "T3: PLAY warrior_sweep -> Random fuzz pick: warrior_sweep",
+        "T3: PLAY warrior_sweep -> Random fuzz pick: warrior_sweep",
+        "T3: PLAY warrior_axe_attack -> Random fuzz pick: warrior_axe_attack",
+        "T3: END_TURN (No playable cards with remaining mana (0))",
+        "T4: PLAY warrior_axe_attack -> Random fuzz pick: warrior_axe_attack"
+      ],
+      "block_from_cards": 10,
+      "cards_drawn_by_id": {
+        "adda_swap_health": 1,
+        "last_gasp": 1,
+        "mana_surge": 3,
+        "warrior_axe_attack": 4,
+        "warrior_block": 2,
+        "warrior_sweep": 4,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_by_id": {
+        "adda_swap_health": 1,
+        "mana_surge": 1,
+        "warrior_axe_attack": 3,
+        "warrior_block": 2,
+        "warrior_sweep": 3,
+        "wssws_blood_ritual": 1
+      },
+      "cards_played_total": 11,
+      "damage_taken_events": 5,
+      "encounter_enemies": [
+        "Gob",
+        "Wolf",
+        "Golem"
+      ],
+      "encounter_signature": "Gob + Golem + Wolf",
+      "invariant_errors": [],
+      "match_index": 58,
+      "outcome": "WIN",
+      "player_final_hp": 35,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.45,
+      "qte_stats_by_id": {
+        "adda_swap_health": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        },
+        "wssws_blood_ritual": {
+          "attempts": 1,
+          "failures": 0,
+          "successes": 1
+        }
+      },
+      "remaining_enemy_hp": 0,
+      "strategy": "Random_Fuzz",
+      "turns": 4
+    },
+    {
+      "action_trace": [
+        "T1: PLAY warrior_block -> Random fuzz pick: warrior_block",
+        "T1: PLAY warrior_sweep -> Random fuzz pick: warrior_sweep",
+        "T1: END_TURN (No playable cards with remaining mana (0))",
+        "T2: PLAY warrior_sweep -> Random fuzz pick: warrior_sweep",
+        "T2: PLAY nuke_30_kill_streak -> Random fuzz pick: nuke_30_kill_streak"
+      ],
+      "block_from_cards": 5,
+      "cards_drawn_by_id": {
+        "mana_surge": 1,
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 1,
+        "warrior_block": 2,
+        "warrior_sweep": 3
+      },
+      "cards_played_by_id": {
+        "nuke_30_kill_streak": 1,
+        "warrior_block": 1,
+        "warrior_sweep": 2
+      },
+      "cards_played_total": 4,
+      "damage_taken_events": 4,
+      "encounter_enemies": [
+        "Gob",
+        "Wolf",
+        "Ghost"
+      ],
+      "encounter_signature": "Ghost + Gob + Wolf",
+      "invariant_errors": [],
+      "match_index": 59,
+      "outcome": "LOSE",
+      "player_final_hp": 0,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.45,
+      "qte_stats_by_id": {
+        "nuke_30_kill_streak": {
+          "attempts": 1,
+          "failures": 1,
+          "successes": 0
+        }
+      },
+      "remaining_enemy_hp": 14,
+      "strategy": "Random_Fuzz",
+      "turns": 2
+    },
+    {
+      "action_trace": [
+        "T1: PLAY nuke_30_kill_streak -> Random fuzz pick: nuke_30_kill_streak"
+      ],
+      "block_from_cards": 0,
+      "cards_drawn_by_id": {
+        "nuke_30_kill_streak": 1,
+        "warrior_axe_attack": 1,
+        "warrior_block": 1,
+        "warrior_sweep": 1
+      },
+      "cards_played_by_id": {
+        "nuke_30_kill_streak": 1
+      },
+      "cards_played_total": 1,
+      "damage_taken_events": 1,
+      "encounter_enemies": [
+        "Ghost",
+        "Golem",
+        "Gob"
+      ],
+      "encounter_signature": "Ghost + Gob + Golem",
+      "invariant_errors": [],
+      "match_index": 60,
+      "outcome": "LOSE",
+      "player_final_hp": 0,
+      "player_max_hp": 45,
+      "qte_accuracy_target": 0.45,
+      "qte_stats_by_id": {
+        "nuke_30_kill_streak": {
+          "attempts": 1,
+          "failures": 1,
+          "successes": 0
+        }
+      },
+      "remaining_enemy_hp": 57,
+      "strategy": "Random_Fuzz",
+      "turns": 1
+    }
+  ],
+  "project": "StrategemSpiral / slayTheStrat (Godot 4.7)",
+  "simulation_overview": {
+    "invariant_errors": [],
+    "invariant_errors_count": 0,
+    "losses": 16,
+    "obliterated": 2,
+    "overall_win_rate_pct": 70.0,
+    "timeouts": 0,
+    "total_matches": 60,
+    "wins": 42
+  },
+  "strategy_breakdown": {
+    "Aggressive": {
+      "avg_cards_played": 9.6,
+      "avg_turns": 4.1,
+      "avg_win_hp": 11.5,
+      "avg_win_turns": 3.5,
+      "losses": 1,
+      "matches": 12,
+      "obliterated": 1,
+      "timeouts": 0,
+      "win_rate_pct": 83.3,
+      "wins": 10
+    },
+    "Defensive": {
+      "avg_cards_played": 12.1,
+      "avg_turns": 4.7,
+      "avg_win_hp": 15.4,
+      "avg_win_turns": 3.7,
+      "losses": 3,
+      "matches": 12,
+      "obliterated": 0,
+      "timeouts": 0,
+      "win_rate_pct": 75.0,
+      "wins": 9
+    },
+    "Human_Sim_70QTE": {
+      "avg_cards_played": 10.2,
+      "avg_turns": 4.8,
+      "avg_win_hp": 9.3,
+      "avg_win_turns": 5.3,
+      "losses": 2,
+      "matches": 12,
+      "obliterated": 0,
+      "timeouts": 0,
+      "win_rate_pct": 83.3,
+      "wins": 10
+    },
+    "Random_Fuzz": {
+      "avg_cards_played": 5.8,
+      "avg_turns": 2.2,
+      "avg_win_hp": 25.0,
+      "avg_win_turns": 3.0,
+      "losses": 9,
+      "matches": 12,
+      "obliterated": 1,
+      "timeouts": 0,
+      "win_rate_pct": 16.7,
+      "wins": 2
+    },
+    "Tactical_Pro": {
+      "avg_cards_played": 13.2,
+      "avg_turns": 5.6,
+      "avg_win_hp": 12.5,
+      "avg_win_turns": 5.5,
+      "losses": 1,
+      "matches": 12,
+      "obliterated": 0,
+      "timeouts": 0,
+      "win_rate_pct": 91.7,
+      "wins": 11
+    }
+  }
+}

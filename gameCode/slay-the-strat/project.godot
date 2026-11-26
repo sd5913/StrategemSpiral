@@ -25,6 +25,7 @@ Events="*uid://ip3cb2qe2kbw"
 Shaker="*uid://bpmevd0tbhocd"
 MusicPlayer="*uid://dfs24rkcyk2f0"
 SfxPlayer="*uid://cwbjrxl1r0trv"
+AITestSystem="*res://ai_test_system/ai_hud_autoload.gd"
 
 [display]
 

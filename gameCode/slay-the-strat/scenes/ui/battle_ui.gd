@@ -8,8 +8,18 @@ extends CanvasLayer
 @onready var end_turn_button: Button = %EndTurnButton
 
 func _ready() -> void:
+	end_turn_button.disabled = true
 	Events.player_hand_drawn.connect(_on_player_hand_drawn)
+	Events.battle_over_resolution_started.connect(_on_battle_over_resolution_started)
+	Events.battle_over_resolution_finished.connect(_on_battle_over_resolution_finished)
 	end_turn_button.pressed.connect(_on_end_turn_button_pressed)
+
+func _on_battle_over_resolution_started() -> void:
+	end_turn_button.disabled = true
+
+func _on_battle_over_resolution_finished() -> void:
+	if not get_tree().paused:
+		end_turn_button.disabled = false
 
 func _set_char_stats(value: CharacterStats) -> void:
 	char_stats = value

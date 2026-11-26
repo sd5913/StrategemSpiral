@@ -56,12 +56,12 @@ func _play_nuclear_cutscene(player: Player) -> CanvasLayer:
 	layer.add_child(flash)
 	arena.add_child(layer)
 
-	var whiteout_tween := player.create_tween()
+	var whiteout_tween := arena.create_tween()
 	whiteout_tween.tween_property(flash, "color:a", 0.12, 1.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	whiteout_tween.tween_property(flash, "color:a", 1.0, 2.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
 	whiteout_tween.tween_interval(0.4)
 
-	var quake_tween := player.create_tween()
+	var quake_tween := arena.create_tween()
 	var shake_steps := 36
 	for step in range(shake_steps):
 		var intensity := float(step + 1) / float(shake_steps)
@@ -75,8 +75,10 @@ func _play_nuclear_cutscene(player: Player) -> CanvasLayer:
 	return layer
 
 func _fade_whiteout(layer: CanvasLayer, player: Player) -> void:
+	var host_node: Node = player.get_parent() if is_instance_valid(player) and player.get_parent() else layer
 	var flash := layer.get_child(0) as ColorRect
-	var fade_tween := player.create_tween()
+	var fade_tween := host_node.create_tween()
 	fade_tween.tween_property(flash, "color:a", 0.0, 1.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	await fade_tween.finished
-	layer.queue_free()
+	if is_instance_valid(layer):
+		layer.queue_free()
